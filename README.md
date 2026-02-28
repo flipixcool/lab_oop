@@ -1,8 +1,8 @@
 Лабы по ООП на Python, пытаюсь сделать все через IDE Zed & использовать Vim как редактор кода, буду писать все без гпт, т.к надо научиться новым технологиям
 
 # Ветки проекта:
-[main]
-[lab_01]
+[main](https://github.com/flipixcool/lab_oop/blob/main)
+[lab_01](https://github.com/flipixcool/lab_oop/blob/lab_01)
 
 
 ![смешняфка](funny.jpg)
