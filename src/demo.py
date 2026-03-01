@@ -1,10 +1,9 @@
-from model import Customer, OrderStorage
+from model import Customer, OrderStorage, Order
 
 # Создаем объекты
 print(f"Всего клиентов до: {Customer.total_customers}")
 ivan = Customer("Иван", 25)
 maria = Customer("Мария", 30)
-alex = Customer("Алекс", 20)
 print(f"Всего клиентов после: {Customer.total_customers}")
 
 print("\n--- Задание на 3 ---")
@@ -36,9 +35,32 @@ try:
 except ValueError as e:
     print(f"Ошибка в возрасте: {e}")
 
+# Ошибки при создании Order
+print("\n--- Ошибки при создании Order ---")
+
+try:
+    bad_order = Order("", [{"pizza": 1, "price": 500}], 500)
+except ValueError as e:
+    print(f"Ошибка в ID: {e}")
+
+try:
+    bad_order = Order("1", [], 500)
+except ValueError as e:
+    print(f"Ошибка в товарах: {e}")
+
+try:
+    bad_order = Order("1", [{"pizza": 1, "price": 500}], 0)  # 0 to test empty check
+except ValueError as e:
+    print(f"Ошибка в сумме: {e}")
+
+try:
+    bad_order = Order("1", [{"pizza": 1, "price": 500}], -100)
+except ValueError as e:
+    print(f"Ошибка в сумме: {e}")
+
 # Добавляем заказы
-ivan.add_order([{"pizza": 2, "price": 500}], 1000)
-maria.add_order([{"coffee": 1, "price": 200}], 200)
+ivan.add_order([{"pizza": 2, "price": 500}])
+maria.add_order([{"coffee": 1, "price": 200}])
 
 
 # Поиск по зашифрованному ID
@@ -53,6 +75,7 @@ def find_customer_by_id(customers, enc_id: str) -> Customer | None:
 print("\n--- Заказы Иван ---")
 customers = [ivan, maria]
 found = find_customer_by_id(customers, ivan.customer_id)
+assert found is not None
 
 for order in found.get_orders():
     print(f"  {order}")
@@ -60,7 +83,7 @@ for order in found.get_orders():
 # Ошибка при создании заказа
 print("\n--- Ошибка при создании заказа ---")
 try:
-    ivan.add_order([{"pizza": -3, "price": 500}], -1500)
+    ivan.add_order([{"pizza": -3, "price": 500}])
 except ValueError as e:
     print(f"Ошибка: {e}")
 
@@ -80,12 +103,38 @@ except AttributeError as e:
 # OrderStorage (класс-хранилище заказов)
 print("\n--- OrderStorage ---")
 storage = OrderStorage()
-order1 = ivan.add_order([{"burger": 1, "price": 300}], 300)
-order2 = ivan.add_order([{"fries": 2, "price": 150}], 300)
+order1 = ivan.add_order([{"burger": 1, "price": 300}])
+order2 = ivan.add_order([{"fries": 2, "price": 150}])
 storage.add_order(order1)
 storage.add_order(order2)
 print(f"Всего заказов в хранилище: {len(storage.get_all_orders())}")
 print(f"Поиск по ID: {storage.find_by_id(order1.order_id)}")
 
+# Пример getter и setter для card_status
+print("\n--- Getter и Setter для card_status ---")
+print(f"Статус карты: {ivan.card_status}")
+ivan.card_status = "active"
+print(f"После изменения: {ivan.card_status}")
+try:
+    ivan.card_status = ""
+except ValueError as e:
+    print(f"Ошибка: {e}")
+
 
 print(len(maria.get_orders()))
+
+print(ivan.total_orders()["total"])
+print(ivan.total_orders()["items"])
+
+# Демонстрация скидки 15% при add_order
+print("\n--- Скидка при add_order ---")
+order = ivan.add_order([{"pizza": 2, "price": 500}])
+print(f"Заказ: {order}")
+print(f"Скидка: {order.discount}₽")
+print(f"Итого к оплате: {order.total}₽")
+
+# Клиент без скидки
+order2 = maria.add_order([{"coffee": 1, "price": 200}])
+print(f"Заказ без скидки: {order2}")
+print(f"Скидка: {order2.discount}₽")
+print(f"Итого к оплате: {order2.total}₽")
