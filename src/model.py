@@ -10,7 +10,7 @@ class Order:
     def __init__(self, order_id: str, items: List[Dict], total: float):
         if total < 0:
             raise ValueError("Сумма заказа не может быть меньше 0")
-        
+
         for item in items:
             if "price" not in item:
                 raise ValueError("Цена товара обязательна")
@@ -73,6 +73,10 @@ class Customer:
         """Только для админа! Расшифрованный ID"""
         return self._manager._decrypt_id(self.customer_id)
 
+    @raw_id.setter
+    def raw_id(self, value):
+        raise AttributeError("raw_id нельзя менять")
+
     def _encrypt_id(self) -> str:
         """Приватный метод шифрования"""
         return self._manager._encrypt_id(self._raw_id)
@@ -98,6 +102,11 @@ class Customer:
 
     def __str__(self):
         return f"{self.name} (ID: {self.customer_id[:16]}...)"
+
+    def __eq__(self, other):
+        if isinstance(other, Customer):
+            return self.customer_id == other.customer_id
+        return False
 
     def __repr__(self):
         return f"Customer('{self.name}', {self.age}, '{self.customer_id}')"
