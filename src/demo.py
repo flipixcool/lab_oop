@@ -1,10 +1,13 @@
-from model import Customer
+from model import Customer, OrderStorage
 
 # Создаем объекты
+print(f"Всего клиентов до: {Customer.total_customers}")
 ivan = Customer("Иван", 25)
 maria = Customer("Мария", 30)
+alex = Customer("Алекс", 20)
+print(f"Всего клиентов после: {Customer.total_customers}")
 
-print("--- Задание на 3 ---")
+print("\n--- Задание на 3 ---")
 
 # Демонстрация __str__ & __repr__
 print("\n--- Демонстрация __str__ & __repr__ ---")
@@ -35,7 +38,8 @@ except ValueError as e:
 
 # Добавляем заказы
 ivan.add_order([{"pizza": 2, "price": 500}], 1000)
-ivan.add_order([{"coffee": 1, "price": 200}], 200)
+maria.add_order([{"coffee": 1, "price": 200}], 200)
+
 
 # Поиск по зашифрованному ID
 def find_customer_by_id(customers, enc_id: str) -> Customer | None:
@@ -43,6 +47,7 @@ def find_customer_by_id(customers, enc_id: str) -> Customer | None:
         if customer.customer_id == enc_id:
             return customer
     return None
+
 
 # Тестируем
 print("\n--- Заказы Иван ---")
@@ -71,3 +76,16 @@ try:
     ivan.raw_id = "new_id"
 except AttributeError as e:
     print(f"Ошибка: {e}")
+
+# OrderStorage (класс-хранилище заказов)
+print("\n--- OrderStorage ---")
+storage = OrderStorage()
+order1 = ivan.add_order([{"burger": 1, "price": 300}], 300)
+order2 = ivan.add_order([{"fries": 2, "price": 150}], 300)
+storage.add_order(order1)
+storage.add_order(order2)
+print(f"Всего заказов в хранилище: {len(storage.get_all_orders())}")
+print(f"Поиск по ID: {storage.find_by_id(order1.order_id)}")
+
+
+print(len(maria.get_orders()))

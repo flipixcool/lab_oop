@@ -29,6 +29,43 @@ class Order:
         return f"Заказ #{self.order_id} | Сумма: {self.total}₽"
 
 
+class OrderStorage:
+    """Класс-хранилище для всех заказов"""
+
+    _instance = None
+    orders: List[Order] = []
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def add_order(self, order: Order):
+        self.orders.append(order)
+
+    def get_order(self, order_id: str) -> Order | None:
+        for order in self.orders:
+            if order.order_id == order_id:
+                return order
+        return None
+
+    def remove_order(self, order_id: str) -> bool:
+        for i, order in enumerate(self.orders):
+            if order.order_id == order_id:
+                self.orders.pop(i)
+                return True
+        return False
+
+    def find_by_id(self, order_id: str) -> Order | None:
+        return self.get_order(order_id)
+
+    def get_all_orders(self) -> List[Order]:
+        return self.orders
+
+    def get_count(self) -> int:
+        return len(self.orders)
+
+
 class CustomerManager:
     """Менеджер для шифрования/дешифрования ID"""
 
@@ -49,24 +86,23 @@ class CustomerManager:
 
 class Customer:
     _manager = CustomerManager()
+    _storage = OrderStorage()
+    total_customers = 0
 
     def __init__(self, name: str, age: int, card_status: str = "active"):
-        if not re.match(r"^[a-zA-Zа-яА-ЯёЁ]+$", name):
-            raise ValueError(
-                "Имя должно содержать только буквы латинского или русского алфавита"
-            )
-        self.name = name
+        Customer.total_customers += 1
 
-        try:
-            if age < 0 or age > 110:
-                raise ValueError()
-        except ValueError:
+        if not re.match(r"^[a-zA-Zа-яА-ЯёЁ]+$", name):
+            raise ValueError("Имя должно содержать только буквы")
+        if not 0 <= age <= 110:
             raise ValueError("Возраст должен быть от 0 до 110")
+
+        self.name = name
+        self.age = age
         self.age = age
         self.card_status = card_status
         self._raw_id = str(uuid4())  # Реальный ID
         self.customer_id = self._encrypt_id()  # Зашифрованный ID
-        self.orders: List[Order] = []  # Список заказов
 
     @property
     def raw_id(self) -> str:
@@ -82,23 +118,23 @@ class Customer:
         return self._manager._encrypt_id(self._raw_id)
 
     def add_order(self, items: List[Dict], total: float):
-        """Добавляет заказ к клиенту"""
-        order_id = f"{self._raw_id[:8]}-{len(self.orders)+1}"
+        """Добавляет заказ к клиенту через Storage"""
+        order_id = f"{self._raw_id[:8]}-{Customer._storage.get_count()+1}"
         order = Order(order_id, items, total)
-        self.orders.append(order)
+        Customer._storage.add_order(order)
         return order
 
     def delete_order(self, order_id: str) -> bool:
-        """Удаляет заказ по ID. Возвращает True если успешно"""
-        for i, order in enumerate(self.orders):
-            if order.order_id == order_id:
-                self.orders.pop(i)
-                return True
-        return False
+        """Удаляет заказ по ID через Storage"""
+        return Customer._storage.remove_order(order_id)
 
     def get_orders(self) -> List[Order]:
         """Возвращает заказы клиента"""
-        return self.orders
+        return [
+            o
+            for o in Customer._storage.get_all_orders()
+            if o.order_id.startswith(self._raw_id[:8])
+        ]
 
     def __str__(self):
         return f"{self.name} (ID: {self.customer_id[:16]}...)"
