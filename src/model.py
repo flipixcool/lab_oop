@@ -1,21 +1,38 @@
 from cryptography.fernet import Fernet
 from uuid import uuid4
-from typing import List, Dict
+from typing import List, Dict, Any
 import base64
 import re
 from datetime import datetime
 
 
+class Validators:
+    @staticmethod
+    def validate_not_empty(value: Any, field_name: str):
+        if value is None or (isinstance(value, str) and not value.strip()):
+            raise ValueError(f"{field_name} не может быть пустым")
+
+    @staticmethod
+    def validate_positive(value: float | int | None, field_name: str):
+        if value is None:
+            raise ValueError(f"{field_name} не может быть пустым")
+        if value < 0:
+            raise ValueError(f"{field_name} не может быть меньше 0")
+
+    @staticmethod
+    def validate_range(value: int | None, field_name: str, min_val: int, max_val: int):
+        if value is None:
+            raise ValueError(f"{field_name} не может быть пустым")
+        if not min_val <= value <= max_val:
+            raise ValueError(f"{field_name} должен быть от {min_val} до {max_val}")
+
+
 class Order:
     def __init__(self, order_id: str, items: List[Dict], total: float, discount: float = 0, original_total: float | None = None):
-        if not order_id or not order_id.strip():
-            raise ValueError("ID заказа не может быть пустым")
-        if not items:
-            raise ValueError("Список товаров не может быть пустым")
-        if total is None:
-            raise ValueError("Сумма заказа не может быть пустой")
-        if total < 0:
-            raise ValueError("Сумма заказа не может быть меньше 0")
+        Validators.validate_not_empty(order_id, "ID заказа")
+        Validators.validate_not_empty(items, "Список товаров")
+        Validators.validate_positive(total, "Сумма заказа")
+        Validators.validate_positive(original_total if original_total else 0, "Оригинальная сумма")
 
         for item in items:
             if "price" not in item:
@@ -34,7 +51,7 @@ class Order:
         self.created_at = datetime.now()
 
     def __str__(self):
-        if self.discount == "active":
+        if self.discount > 0:
             return f"Заказ #{self.order_id} | Сумма: {self.original_total}₽ → {self.total}₽ (скидка: {self.discount}₽)"
         return f"Заказ #{self.order_id} | Сумма: {self.total}₽"
 
@@ -99,22 +116,14 @@ class Customer:
     _storage = OrderStorage()
     total_customers = 0
 
-    @staticmethod
-    def _validate_not_empty(value: str, field_name: str):
-        if not value or not value.strip():
-            raise ValueError(f"{field_name} не может быть пустым")
-
     def __init__(self, name: str, age: int, card_status: str = "active"):
         Customer.total_customers += 1
 
-        self._validate_not_empty(name, "Имя")
+        Validators.validate_not_empty(name, "Имя")
         if not re.match(r"^[a-zA-Zа-яА-ЯёЁ]+$", name):
             raise ValueError("Имя должно содержать только буквы")
-        if age is None:
-            raise ValueError("Возраст не может быть пустым")
-        if not 0 <= age <= 110:
-            raise ValueError("Возраст должен быть от 0 до 110")
-        self._validate_not_empty(card_status, "Статус карты")
+        Validators.validate_range(age, "Возраст", 0, 110)
+        Validators.validate_not_empty(card_status, "Статус карты")
 
         self.name = name
         self.age = age
@@ -137,8 +146,26 @@ class Customer:
 
     @card_status.setter
     def card_status(self, value: str):
-        self._validate_not_empty(value, "Статус карты")
+        Validators.validate_not_empty(value, "Статус карты")
         self._card_status = value
+
+    def activate(self):
+        """Активирует карту"""
+        self.card_status = "active"
+        print(f"Карта клиента {self.name} активирована")
+
+    def close(self):
+        """Блокирует карту"""
+        self.card_status = "blocked"
+        print(f"Карта клиента {self.name} заблокирована")
+
+    def upgrade(self):
+        """Повышает статус карты (если была inactive -> active)"""
+        if self.card_status == "inactive":
+            self.card_status = "active"
+            print(f"Карта клиента {self.name} обновлена до active")
+        else:
+            print(f"Карта клиента {self.name} уже в статусе {self.card_status}")
 
     def _encrypt_id(self) -> str:
         """Приватный метод шифрования"""
@@ -152,14 +179,8 @@ class Customer:
                 if key != "price":
                     original_total += item["price"] * value
         
-        discount = 0
-        total = original_total
-        if self.card_status == "active":
-            discount = original_total * 0.15
-            total = original_total - discount
-        
         order_id = f"{self._raw_id[:8]}-{Customer._storage.get_count()+1}"
-        order = Order(order_id, items, total, discount, original_total)
+        order = Order(order_id, items, original_total, 0, original_total)
         Customer._storage.add_order(order)
         return order
 
@@ -182,13 +203,31 @@ class Customer:
         all_items = []
         for order in orders:
             all_items.extend(order.items)
+        
+        discount = 0
+        final_total = total_sum
+        if self.card_status == "active":
+            discount = total_sum * 0.15
+            final_total = total_sum - discount
+        
         return {
             "orders": orders,
             "items": all_items,
             "total": total_sum,
-            "discount": 0,
-            "final_total": total_sum
+            "discount": discount,
+            "final_total": final_total
         }
+
+    def print_cart(self):
+        """Выводит корзину клиента в красивом формате"""
+        cart = self.total_orders()
+        print(f"\n--- Корзина {self.name} ---")
+        print(f"Товары: {cart['items']}")
+        print(f"Итого: {cart['total']}₽")
+        if cart['discount'] > 0:
+            print(f"Скидка (15%): -{cart['discount']}₽")
+        print(f"К оплате: {cart['final_total']}₽")
+        print(f"Статус карты: {self.card_status}")
 
     def apply_discount(self) -> Dict:
         """Применяет скидку 15% если card_status = 'active'"""

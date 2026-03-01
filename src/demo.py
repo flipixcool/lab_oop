@@ -120,21 +120,20 @@ try:
 except ValueError as e:
     print(f"Ошибка: {e}")
 
+# Методы изменения состояния
+print("\n--- Методы изменения состояния ---")
+petr = Customer("Пётр", 28, "inactive")
+print(f"Статус карты Пётра: {petr.card_status}")
+petr.activate()
+print(f"После activate: {petr.card_status}")
+petr.close()
+print(f"После close: {petr.card_status}")
+
+ivan.activate()
+ivan.close()
+ivan.upgrade()
 
 print(len(maria.get_orders()))
 
-print(ivan.total_orders()["total"])
-print(ivan.total_orders()["items"])
-
-# Демонстрация скидки 15% при add_order
-print("\n--- Скидка при add_order ---")
-order = ivan.add_order([{"pizza": 2, "price": 500}])
-print(f"Заказ: {order}")
-print(f"Скидка: {order.discount}₽")
-print(f"Итого к оплате: {order.total}₽")
-
-# Клиент без скидки
-order2 = maria.add_order([{"coffee": 1, "price": 200}])
-print(f"Заказ без скидки: {order2}")
-print(f"Скидка: {order2.discount}₽")
-print(f"Итого к оплате: {order2.total}₽")
+ivan.print_cart()
+maria.print_cart()
