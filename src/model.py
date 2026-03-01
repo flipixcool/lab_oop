@@ -51,9 +51,7 @@ class Customer:
     _manager = CustomerManager()
 
     def __init__(self, name: str, age: int, card_status: str = "active"):
-        try:
-            re.match(r"^[a-zA-Zа-яА-ЯёЁ]+$", name).group()
-        except AttributeError:
+        if not re.match(r"^[a-zA-Zа-яА-ЯёЁ]+$", name):
             raise ValueError(
                 "Имя должно содержать только буквы латинского или русского алфавита"
             )
