@@ -65,8 +65,11 @@ class OrderStorage:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance.orders: List[Order] = []
         return cls._instance
+
+    def __init__(self):
+        if not hasattr(self, 'orders'):
+            self.orders: List[Order] = []
 
     def add_order(self, order: Order):
         self.orders.append(order)
