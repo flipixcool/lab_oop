@@ -105,8 +105,6 @@ print("\n--- OrderStorage ---")
 storage = OrderStorage()
 order1 = ivan.add_order([{"burger": 1, "price": 300}])
 order2 = ivan.add_order([{"fries": 2, "price": 150}])
-storage.add_order(order1)
-storage.add_order(order2)
 print(f"Всего заказов в хранилище: {len(storage.get_all_orders())}")
 print(f"Поиск по ID: {storage.find_by_id(order1.order_id)}")
 

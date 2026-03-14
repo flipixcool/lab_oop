@@ -1,176 +1,141 @@
-# Лабораторная работа: Объектно-ориентированное программирование
+# Лабораторная работа №1: Объектно-ориентированное программирование
 
-## Класс Customer
+## Структура проекта
 
-Класс для управления клиентами с поддержкой шифрования ID, заказов и скидок.
-
-### Атрибуты
-- `name` - имя клиента
-- `age` - возраст клиента
-- `card_status` - статус карты (active/inactive/blocked)
-- `customer_id` - зашифрованный ID клиента
-- `raw_id` - расшифрованный ID (только для чтения)
-
-### Методы
-- `activate()` - активирует карту
-- `close()` - блокирует карту
-- `upgrade()` - повышает статус карты (inactive → active)
-- `add_order(items)` - добавляет заказ
-- `delete_order(order_id)` - удаляет заказ
-- `get_orders()` - возвращает все заказы клиента
-- `total_orders()` - возвращает полную корзину с расчётом скидки
-- `print_cart()` - выводит корзину в консоль
-- `apply_discount()` - применяет скидку 15% для активных карт
-
-### Пример использования
-```python
-customer = Customer("Иван", 25, "active")
-customer.add_order([{"pizza": 2, "price": 500}])
-customer.print_cart()
+```
+lab_oop/
+├── src/
+│   ├── model.py   — классы Validators, Order, OrderStorage, CustomerManager, Customer
+│   └── demo.py    — демонстрация всей функциональности
+├── images/
+│   └── Screenshot_20260303_120042.png
+└── README.md
 ```
 
-![aboba](/home/flipixcool/Documents/python/lab_oop/images/Screenshot_20260303_120042.png)
+---
 
-# Код demo.py
+## Соответствие критериям оценки
 
-```python
-from model import Customer, OrderStorage, Order
+### Оценка 3
 
-# Создаем объекты
-print(f"Всего клиентов до: {Customer.total_customers}")
-ivan = Customer("Иван", 25)
-maria = Customer("Мария", 30)
-print(f"Всего клиентов после: {Customer.total_customers}")
+| Критерий | Реализация |
+|----------|-----------|
+| Класс с минимум 4 атрибутами | `Customer`: `name`, `age`, `card_status`, `customer_id`, `_raw_id` |
+| Приватные поля | `_raw_id`, `_card_status` |
+| Валидация в конструкторе | Проверка имени (только буквы), возраста (0–110), статуса карты |
+| Свойство только для чтения | `raw_id` — property с запретом на запись через setter |
+| Магические методы `__str__`, `__eq__` | Реализованы в `Customer` |
+| Демонстрация создания, вывода, сравнения и ошибок | Покрыто в `demo.py` |
 
-print("\n--- Задание на 3 ---")
+### Оценка 4
 
-# Демонстрация __str__ & __repr__
-print("\n--- Демонстрация __str__ & __repr__ ---")
-print(ivan)
-print(ivan.__repr__())
+| Критерий | Реализация |
+|----------|-----------|
+| `__repr__` | Реализован в `Customer` |
+| Setter с валидацией | `card_status` — property с проверкой на пустое значение |
+| Атрибут класса | `total_customers` — счётчик созданных клиентов |
+| Второй бизнес-метод | `print_cart()`, `apply_discount()`, `total_orders()` |
+| Проверка типов и логических ограничений | `Validators.validate_range()`, `validate_positive()`, `validate_not_empty()` |
 
-# Сравниваем объекты
-print("\n--- Сравнение объектов ---")
-print(f"ivan == ivan: {ivan == ivan}")
-print(f"ivan == maria: {ivan == maria}")
+### Оценка 5
 
-# Примеры ошибок при создании Customer
-print("\n--- Ошибки при создании Customer ---")
-try:
-    bad_customer = Customer("Ivan123", 25)
-except ValueError as e:
-    print(f"Ошибка в имени: {e}")
+| Критерий | Реализация |
+|----------|-----------|
+| Валидация вынесена в отдельный класс | Класс `Validators` содержит все методы валидации (`validate_not_empty`, `validate_positive`, `validate_range`) |
+| Методы изменения состояния | `activate()`, `close()`, `upgrade()` |
+| Поведение, зависящее от состояния | Скидка 15% в `total_orders()` и `print_cart()` применяется только при `card_status == "active"` |
 
-try:
-    bad_customer = Customer("Ivan", -5)
-except ValueError as e:
-    print(f"Ошибка в возрасте: {e}")
+---
 
-try:
-    bad_customer = Customer("Ivan", 150)
-except ValueError as e:
-    print(f"Ошибка в возрасте: {e}")
+## Классы
 
-# Ошибки при создании Order
-print("\n--- Ошибки при создании Order ---")
+### `Validators`
 
-try:
-    bad_order = Order("", [{"pizza": 1, "price": 500}], 500)
-except ValueError as e:
-    print(f"Ошибка в ID: {e}")
+Статический класс с методами валидации. Используется всеми остальными классами.
 
-try:
-    bad_order = Order("1", [], 500)
-except ValueError as e:
-    print(f"Ошибка в товарах: {e}")
+| Метод | Описание |
+|-------|----------|
+| `validate_not_empty(value, field_name)` | Проверяет, что значение не `None`, не пустая строка и не пустой список |
+| `validate_positive(value, field_name)` | Проверяет, что число не отрицательное |
+| `validate_range(value, field_name, min_val, max_val)` | Проверяет, что число входит в диапазон `[min_val, max_val]` |
 
-try:
-    bad_order = Order("1", [{"pizza": 1, "price": 500}], 0)  # 0 to test empty check
-except ValueError as e:
-    print(f"Ошибка в сумме: {e}")
+---
 
-try:
-    bad_order = Order("1", [{"pizza": 1, "price": 500}], -100)
-except ValueError as e:
-    print(f"Ошибка в сумме: {e}")
+### `Order`
 
-# Добавляем заказы
-ivan.add_order([{"pizza": 2, "price": 500}])
-maria.add_order([{"coffee": 1, "price": 200}])
+Представляет один заказ клиента.
 
+**Атрибуты:**
+- `order_id` — уникальный идентификатор заказа
+- `items` — список товаров (`[{"название": количество, "price": цена}]`)
+- `total` — итоговая сумма заказа
+- `discount` — применённая скидка
+- `original_total` — исходная сумма до скидки
+- `created_at` — дата и время создания
 
-# Поиск по зашифрованному ID
-def find_customer_by_id(customers, enc_id: str) -> Customer | None:
-    for customer in customers:
-        if customer.customer_id == enc_id:
-            return customer
-    return None
+**Валидация при создании:**
+- `order_id` не может быть пустым
+- `items` не может быть пустым списком
+- `total` должен быть больше 0
 
+---
 
-# Тестируем
-print("\n--- Заказы Иван ---")
-customers = [ivan, maria]
-found = find_customer_by_id(customers, ivan.customer_id)
-assert found is not None
+### `OrderStorage`
 
-for order in found.get_orders():
-    print(f"  {order}")
+Singleton-хранилище всех заказов.
 
-# Ошибка при создании заказа
-print("\n--- Ошибка при создании заказа ---")
-try:
-    ivan.add_order([{"pizza": -3, "price": 500}])
-except ValueError as e:
-    print(f"Ошибка: {e}")
+| Метод | Описание |
+|-------|----------|
+| `add_order(order)` | Добавляет заказ в хранилище |
+| `get_order(order_id)` | Возвращает заказ по ID |
+| `remove_order(order_id)` | Удаляет заказ, возвращает `True`/`False` |
+| `find_by_id(order_id)` | Алиас для `get_order` |
+| `get_all_orders()` | Возвращает все заказы |
+| `get_count()` | Возвращает количество заказов |
 
-print("\n--- Заказы после неудачной попытки ---")
-for order in found.get_orders():
-    print(f"  {order}")
+---
 
-print(f"\nRaw ID: {ivan.raw_id}")
+### `CustomerManager`
 
-# Пример setter (запрет на изменение raw_id)
-print("\n--- Попытка изменить raw_id ---")
-try:
-    ivan.raw_id = "new_id"
-except AttributeError as e:
-    print(f"Ошибка: {e}")
+Отвечает за шифрование и дешифрование идентификаторов клиентов с помощью симметричного алгоритма Fernet.
 
-# OrderStorage (класс-хранилище заказов)
-print("\n--- OrderStorage ---")
-storage = OrderStorage()
-order1 = ivan.add_order([{"burger": 1, "price": 300}])
-order2 = ivan.add_order([{"fries": 2, "price": 150}])
-storage.add_order(order1)
-storage.add_order(order2)
-print(f"Всего заказов в хранилище: {len(storage.get_all_orders())}")
-print(f"Поиск по ID: {storage.find_by_id(order1.order_id)}")
+| Метод | Описание |
+|-------|----------|
+| `_encrypt_id(customer_id)` | Шифрует строку ID |
+| `_decrypt_id(encrypted_id)` | Расшифровывает зашифрованный ID |
 
-# Пример getter и setter для card_status
-print("\n--- Getter и Setter для card_status ---")
-print(f"Статус карты: {ivan.card_status}")
-ivan.card_status = "active"
-print(f"После изменения: {ivan.card_status}")
-try:
-    ivan.card_status = ""
-except ValueError as e:
-    print(f"Ошибка: {e}")
+---
 
-# Методы изменения состояния
-print("\n--- Методы изменения состояния ---")
-petr = Customer("Пётр", 28, "inactive")
-print(f"Статус карты Пётра: {petr.card_status}")
-petr.activate()
-print(f"После activate: {petr.card_status}")
-petr.close()
-print(f"После close: {petr.card_status}")
+### `Customer`
 
-ivan.activate()
-ivan.close()
-ivan.upgrade()
+Главный класс. Управляет данными клиента, его заказами и статусом карты.
 
-print(len(maria.get_orders()))
+**Атрибуты класса:**
+- `total_customers` — количество успешно созданных клиентов
 
-ivan.print_cart()
-maria.print_cart()
-```
+**Атрибуты экземпляра:**
+- `name` — имя (только буквы, не пустое)
+- `age` — возраст (0–110)
+- `card_status` — статус карты: `"active"` / `"inactive"` / `"blocked"`
+- `customer_id` — зашифрованный ID
+- `raw_id` *(read-only property)* — расшифрованный UUID
+
+**Методы:**
+
+| Метод | Описание |
+|-------|----------|
+| `activate()` | Устанавливает `card_status = "active"` |
+| `close()` | Устанавливает `card_status = "blocked"` |
+| `upgrade()` | Переводит `"inactive"` → `"active"`, иначе выводит сообщение |
+| `add_order(items)` | Создаёт заказ и сохраняет в `OrderStorage` |
+| `delete_order(order_id)` | Удаляет заказ из хранилища |
+| `get_orders()` | Возвращает все заказы данного клиента |
+| `total_orders()` | Возвращает словарь с заказами, суммой и скидкой (15% для `"active"`) |
+| `print_cart()` | Выводит корзину в консоль |
+| `apply_discount()` | Возвращает корзину с применённой скидкой |
+
+---
+
+## Пример использования
+
+![Демонстрация работы](images/photo_2026-03-14_23-50-27.jpg)

@@ -1,7 +1,6 @@
 from cryptography.fernet import Fernet
 from uuid import uuid4
 from typing import List, Dict, Any
-import base64
 import re
 from datetime import datetime
 
@@ -9,7 +8,7 @@ from datetime import datetime
 class Validators:
     @staticmethod
     def validate_not_empty(value: Any, field_name: str):
-        if value is None or (isinstance(value, str) and not value.strip()):
+        if value is None or (isinstance(value, str) and not value.strip()) or (isinstance(value, list) and len(value) == 0):
             raise ValueError(f"{field_name} не может быть пустым")
 
     @staticmethod
@@ -32,6 +31,8 @@ class Order:
         Validators.validate_not_empty(order_id, "ID заказа")
         Validators.validate_not_empty(items, "Список товаров")
         Validators.validate_positive(total, "Сумма заказа")
+        if total <= 0:
+            raise ValueError("Сумма заказа должна быть больше 0")
         Validators.validate_positive(original_total if original_total else 0, "Оригинальная сумма")
 
         for item in items:
@@ -60,11 +61,11 @@ class OrderStorage:
     """Класс-хранилище для всех заказов"""
 
     _instance = None
-    orders: List[Order] = []
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance.orders: List[Order] = []
         return cls._instance
 
     def add_order(self, order: Order):
@@ -102,13 +103,11 @@ class CustomerManager:
 
     def _encrypt_id(self, customer_id: str) -> str:
         """Шифрует ID в base64 строку"""
-        encrypted = self.cipher.encrypt(customer_id.encode())
-        return base64.urlsafe_b64encode(encrypted).decode()
+        return self.cipher.encrypt(customer_id.encode()).decode()
 
     def _decrypt_id(self, encrypted_id: str) -> str:
         """Расшифровывает ID"""
-        encrypted = base64.urlsafe_b64decode(encrypted_id.encode())
-        return self.cipher.decrypt(encrypted).decode()
+        return self.cipher.decrypt(encrypted_id.encode()).decode()
 
 
 class Customer:
@@ -117,13 +116,13 @@ class Customer:
     total_customers = 0
 
     def __init__(self, name: str, age: int, card_status: str = "active"):
-        Customer.total_customers += 1
-
         Validators.validate_not_empty(name, "Имя")
         if not re.match(r"^[a-zA-Zа-яА-ЯёЁ]+$", name):
             raise ValueError("Имя должно содержать только буквы")
         Validators.validate_range(age, "Возраст", 0, 110)
         Validators.validate_not_empty(card_status, "Статус карты")
+
+        Customer.total_customers += 1
 
         self.name = name
         self.age = age
@@ -173,12 +172,13 @@ class Customer:
 
     def add_order(self, items: List[Dict]):
         """Добавляет заказ к клиенту через Storage"""
-        original_total = 0
-        for item in items:
-            for key, value in item.items():
-                if key != "price":
-                    original_total += item["price"] * value
-        
+        original_total = sum(
+            item["price"] * v
+            for item in items
+            for k, v in item.items()
+            if k != "price"
+        )
+
         order_id = f"{self._raw_id[:8]}-{Customer._storage.get_count()+1}"
         order = Order(order_id, items, original_total, 0, original_total)
         Customer._storage.add_order(order)
@@ -231,18 +231,7 @@ class Customer:
 
     def apply_discount(self) -> Dict:
         """Применяет скидку 15% если card_status = 'active'"""
-        cart = self.total_orders()
-        if self.card_status == "active":
-            discount = cart["total"] * 0.15
-            final_total = cart["total"] - discount
-            return {
-                "orders": cart["orders"],
-                "items": cart["items"],
-                "total": cart["total"],
-                "discount": discount,
-                "final_total": final_total
-            }
-        return cart
+        return self.total_orders()
 
     def __str__(self):
         return f"{self.name} (ID: {self.customer_id[:16]}...)"
