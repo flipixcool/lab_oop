@@ -8,8 +8,9 @@ lab_oop/
 │   ├── model.py   — классы Validators, Order, OrderStorage, CustomerManager, Customer
 │   └── demo.py    — демонстрация всей функциональности
 ├── images/
-│   └── Screenshot_20260303_120042.png
-└── README.md
+│   └── photo_2026-03-14_23-50-27.jpg
+├── README.md
+└── .gitignore
 ```
 
 ---
