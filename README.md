@@ -5,8 +5,9 @@
 ```
 lab_oop/
 ├── src/
-│   ├── model.py   — классы Validators, Order, OrderStorage, CustomerManager, Customer
-│   └── demo.py    — демонстрация всей функциональности
+│   ├── model.py   — классы Order, OrderStorage, CustomerManager, Customer
+│   ├── demo.py    — демонстрация всей функциональности
+│   └── validate.py — класс Validators
 ├── images/
 │   └── photo_2026-03-14_23-50-27.jpg
 ├── README.md
