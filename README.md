@@ -146,3 +146,61 @@ Singleton-хранилище всех заказов.
 ## Пример использования
 
 ![Демонстрация работы](images/photo_2026-03-14_23-50-27.jpg)
+
+---
+
+## Настройка и запуск
+
+### Установка зависимостей
+
+```bash
+python -m venv oop_venv
+source oop_venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Настройка PostgreSQL
+
+```bash
+# Запустить PostgreSQL
+sudo systemctl start postgresql
+
+# Создать базу данных
+sudo -u postgres psql -c "CREATE DATABASE shop_db;"
+```
+
+### Настройка переменных окружения
+
+```bash
+cp .env.example .env
+# отредактировать .env — вписать свои данные
+```
+
+`.env`:
+```
+DB_URL=postgresql://postgres:yourpassword@localhost:5432/shop_db
+```
+
+### Запуск миграций
+
+```bash
+alembic upgrade head
+```
+
+Откат последней миграции:
+```bash
+alembic downgrade -1
+```
+
+### Заполнение тестовыми данными
+
+```bash
+python main.py
+```
+
+### Запуск тестов
+
+```bash
+pytest tests/ -v
+pytest tests/ --cov=domain --cov-report=term-missing
+```

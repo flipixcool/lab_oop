@@ -98,8 +98,6 @@ celerybeat-schedule
 # Environments
 .env
 .venv
-.env.example
-alembic.ini
 pytest.ini
 env/
 oop_venv/

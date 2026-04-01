@@ -1,2 +1,6 @@
+sqlalchemy
+psycopg2-binary
+alembic
+python-dotenv
 pytest
 pytest-cov
