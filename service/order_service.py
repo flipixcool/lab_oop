@@ -17,12 +17,7 @@ class OrderService:
         self._product_repo = product_repo
         self._warehouse = warehouse
 
-    def create_order(
-        self,
-        customer_id: str,
-        items_data: list[dict],
-        discount_strategy: DiscountStrategy,
-    ) -> Order:
+    def create_order(self, customer_id: str, items_data: list[dict]) -> Order:
         if not self._customer_repo.get(customer_id):
             raise CustomerNotFoundError(f"Customer '{customer_id}' not found")
 

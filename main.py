@@ -6,14 +6,17 @@ from presentation.cli import CLI
 
 session = SessionLocal()
 
-customer_repo = CustomerPostgresRepository(session)
-product_repo = ProductPostgresRepository(session)
-order_repo = OrderPostgresRepository(session)
-warehouse = Warehouse()
+try:
+    customer_repo = CustomerPostgresRepository(session)
+    product_repo = ProductPostgresRepository(session)
+    order_repo = OrderPostgresRepository(session)
+    warehouse = Warehouse()
 
-customer_service = CustomerService(customer_repo)
-product_service = ProductService(product_repo, warehouse)
-order_service = OrderService(order_repo, customer_repo, product_repo, warehouse)
+    customer_service = CustomerService(customer_repo)
+    product_service = ProductService(product_repo, warehouse)
+    order_service = OrderService(order_repo, customer_repo, product_repo, warehouse)
 
-cli = CLI(customer_service, product_service, order_service)
-cli.run()
+    cli = CLI(customer_service, product_service, order_service)
+    cli.run()
+finally:
+    session.close()

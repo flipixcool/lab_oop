@@ -146,11 +146,13 @@ class CLI:
             print("Нет позиций — заказ не создан.")
             return
 
+        order = self._os.create_order(customer_id, items_data)
+        print(f"Заказ создан: {order}")
+
         use_discount = input("Применить скидку лояльности? (y/n): ").strip().lower() == "y"
         strategy = LoyaltyDiscount() if use_discount else NoDiscount()
-
-        order = self._os.create_order(customer_id, items_data, strategy)
-        print(f"Заказ создан: {order}")
+        total = self._os.calculate_total_with_discount(order.id, customer_id, strategy)
+        print(f"Итого к оплате: {total}₽")
 
     def _show_customer_orders(self):
         customer_id = input("ID клиента: ").strip()
