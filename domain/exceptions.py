@@ -32,3 +32,15 @@ class InsufficientStockError(ShopError):
             f"InsufficientStockError: '{self.product_name}' — "
             f"requested {self.requested}, available {self.available}"
         )
+
+
+class CustomerNotFoundError(ShopError):
+    pass
+
+
+class ProductNotFoundError(ShopError):
+    pass
+
+
+class InvalidOrderError(ShopError):
+    pass

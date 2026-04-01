@@ -16,7 +16,14 @@ class Validators:
             raise ValidationError(f"{field_name} должен быть больше 0", field_name)
 
     @staticmethod
-    def validate_range(value: int | None, field_name: str, min_val: int, max_val: int):
+    def validate_non_negative(value: float | int | None, field_name: str):
+        if value is None:
+            raise ValidationError(f"{field_name} не может быть пустым", field_name)
+        if value < 0:
+            raise ValidationError(f"{field_name} не может быть меньше 0", field_name)
+
+    @staticmethod
+    def validate_range(value: int | float | None, field_name: str, min_val: int | float, max_val: int | float):
         if value is None:
             raise ValidationError(f"{field_name} не может быть пустым", field_name)
         if not min_val <= value <= max_val:
