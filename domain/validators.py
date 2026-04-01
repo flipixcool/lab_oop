@@ -1,16 +1,5 @@
 from typing import Any
-from domain.exceptions import ShopError
-
-
-class ValidationError(ShopError):
-    def __init__(self, message: str, field_name: str = ""):
-        self.field_name = field_name
-        super().__init__(message)
-
-    def __str__(self):
-        if self.field_name:
-            return f"ValidationError [{self.field_name}]: {self.message}"
-        return f"ValidationError: {self.message}"
+from domain.exceptions import ValidationError
 
 
 class Validators:
@@ -23,8 +12,8 @@ class Validators:
     def validate_positive(value: float | int | None, field_name: str):
         if value is None:
             raise ValidationError(f"{field_name} не может быть пустым", field_name)
-        if value < 0:
-            raise ValidationError(f"{field_name} не может быть меньше 0", field_name)
+        if value <= 0:
+            raise ValidationError(f"{field_name} должен быть больше 0", field_name)
 
     @staticmethod
     def validate_range(value: int | None, field_name: str, min_val: int, max_val: int):
