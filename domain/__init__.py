@@ -7,6 +7,7 @@ from domain.exceptions import (
     InvalidOrderError,
 )
 from domain.validators import Validators
+from domain.containers import EntityCollection
 from domain.model import (
     OrderStatus,
     LoyaltyLevel,
@@ -32,4 +33,5 @@ __all__ = [
     "OrderItem",
     "Order",
     "Warehouse",
+    "EntityCollection",
 ]

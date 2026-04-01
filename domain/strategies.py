@@ -14,9 +14,11 @@ class NoDiscount(DiscountStrategy):
 
 
 class LoyaltyDiscount(DiscountStrategy):
-    """15% скидка для активных клиентов"""
-
     def apply(self, order: Order, loyalty_level: LoyaltyLevel) -> float:
-        if loyalty_level == LoyaltyLevel.ACTIVE:
-            return order.total * 0.85
-        return order.total
+        discounts = {
+            LoyaltyLevel.BRONZE: 0,
+            LoyaltyLevel.SILVER: 5,
+            LoyaltyLevel.GOLD: 15,
+        }
+        discount_percent = discounts.get(loyalty_level, 0)
+        return order.total * (1 - discount_percent / 100)
