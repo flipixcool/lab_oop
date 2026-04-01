@@ -1,4 +1,3 @@
-from cryptography.fernet import Fernet
 from uuid import uuid4
 from typing import List, Dict
 import re
@@ -77,24 +76,7 @@ class OrderStorage:
         return len(self.orders)
 
 
-class CustomerManager:
-    """Менеджер для шифрования/дешифрования ID"""
-
-    def __init__(self):
-        key = Fernet.generate_key()
-        self.cipher = Fernet(key)
-
-    def _encrypt_id(self, customer_id: str) -> str:
-        """Шифрует ID в base64 строку"""
-        return self.cipher.encrypt(customer_id.encode()).decode()
-
-    def _decrypt_id(self, encrypted_id: str) -> str:
-        """Расшифровывает ID"""
-        return self.cipher.decrypt(encrypted_id.encode()).decode()
-
-
 class Customer:
-    _manager = CustomerManager()
     _storage = OrderStorage()
     total_customers = 0
 
@@ -110,17 +92,7 @@ class Customer:
         self.name = name
         self.age = age
         self.card_status = card_status
-        self._raw_id = str(uuid4())  # Реальный ID
-        self.customer_id = self._encrypt_id()  # Зашифрованный ID
-
-    @property
-    def raw_id(self) -> str:
-        """Только для админа! Расшифрованный ID"""
-        return self._manager._decrypt_id(self.customer_id)
-
-    @raw_id.setter
-    def raw_id(self, value):
-        raise AttributeError("raw_id нельзя менять")
+        self.customer_id = str(uuid4())
 
     @property
     def card_status(self) -> str:
@@ -149,10 +121,6 @@ class Customer:
         else:
             print(f"Карта клиента {self.name} уже в статусе {self.card_status}")
 
-    def _encrypt_id(self) -> str:
-        """Приватный метод шифрования"""
-        return self._manager._encrypt_id(self._raw_id)
-
     def add_order(self, items: List[Dict]):
         """Добавляет заказ к клиенту через Storage"""
         original_total = sum(
@@ -162,7 +130,7 @@ class Customer:
             if k != "price"
         )
 
-        order_id = f"{self._raw_id[:8]}-{Customer._storage.get_count()+1}"
+        order_id = f"{self.customer_id[:8]}-{Customer._storage.get_count()+1}"
         order = Order(order_id, items, original_total, 0, original_total)
         Customer._storage.add_order(order)
         return order
@@ -176,7 +144,7 @@ class Customer:
         return [
             o
             for o in Customer._storage.get_all_orders()
-            if o.order_id.startswith(self._raw_id[:8])
+            if o.order_id.startswith(self.customer_id[:8])
         ]
 
     def total_orders(self) -> Dict:
@@ -217,7 +185,7 @@ class Customer:
         return self.total_orders()
 
     def __str__(self):
-        return f"{self.name} (ID: {self.customer_id[:16]}...)"
+        return f"{self.name} (ID: {self.customer_id})"
 
     def __eq__(self, other):
         if isinstance(other, Customer):

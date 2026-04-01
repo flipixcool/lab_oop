@@ -63,21 +63,8 @@ ivan.add_order([{"pizza": 2, "price": 500}])
 maria.add_order([{"coffee": 1, "price": 200}])
 
 
-# Поиск по зашифрованному ID
-def find_customer_by_id(customers, enc_id: str) -> Customer | None:
-    for customer in customers:
-        if customer.customer_id == enc_id:
-            return customer
-    return None
-
-
-# Тестируем
 print("\n--- Заказы Иван ---")
-customers = [ivan, maria]
-found = find_customer_by_id(customers, ivan.customer_id)
-assert found is not None
-
-for order in found.get_orders():
+for order in ivan.get_orders():
     print(f"  {order}")
 
 # Ошибка при создании заказа
@@ -88,17 +75,8 @@ except ValueError as e:
     print(f"Ошибка: {e}")
 
 print("\n--- Заказы после неудачной попытки ---")
-for order in found.get_orders():
+for order in ivan.get_orders():
     print(f"  {order}")
-
-print(f"\nRaw ID: {ivan.raw_id}")
-
-# Пример setter (запрет на изменение raw_id)
-print("\n--- Попытка изменить raw_id ---")
-try:
-    ivan.raw_id = "new_id"
-except AttributeError as e:
-    print(f"Ошибка: {e}")
 
 # OrderStorage (класс-хранилище заказов)
 print("\n--- OrderStorage ---")
