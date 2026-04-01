@@ -34,6 +34,10 @@ class InsufficientStockError(ShopError):
         )
 
 
+class EntityNotFoundError(ShopError):
+    pass
+
+
 class CustomerNotFoundError(ShopError):
     pass
 

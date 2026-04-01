@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Callable
 from uuid import uuid4
-from domain.exceptions import InvalidOrderError
+from domain.exceptions import EntityNotFoundError
 
 T = TypeVar('T')
 
@@ -33,6 +33,8 @@ class InMemoryRepository(Repository[T]):
     def add(self, entity: T) -> T:
         entity_id = getattr(entity, 'id', None)
         if not entity_id or entity_id in self._storage:
+            if entity_id in self._storage:
+                del self._storage[entity_id]
             entity.id = str(uuid4())
         self._storage[entity.id] = entity
         return entity
@@ -42,7 +44,7 @@ class InMemoryRepository(Repository[T]):
 
     def update(self, entity: T) -> T:
         if entity.id not in self._storage:
-            raise InvalidOrderError(f"Entity with id '{entity.id}' not found")
+            raise EntityNotFoundError(f"Entity with id '{entity.id}' not found")
         self._storage[entity.id] = entity
         return entity
 
