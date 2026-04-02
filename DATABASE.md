@@ -2,7 +2,7 @@
 
 ## Изображение связей
 
-![фото](/home/flipixcool/Documents/python/lab_oop/images/deepseek_mermaid_20260402_401032.png)
+![фото](images/deepseek_mermaid_20260402_401032.png)
 
 ---
 
