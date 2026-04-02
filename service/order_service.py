@@ -47,6 +47,9 @@ class OrderService:
     def get_order(self, order_id: str) -> Order | None:
         return self._order_repo.get(order_id)
 
+    def get_all_orders(self) -> list[Order]:
+        return self._order_repo.find_all()
+
     def get_customer_orders(self, customer_id: str) -> list[Order]:
         return self._order_repo.find_by(lambda o: o.customer_id == customer_id)
 
