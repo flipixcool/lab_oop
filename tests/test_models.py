@@ -7,11 +7,15 @@ from domain.exceptions import ValidationError, InsufficientStockError
 
 @pytest.fixture
 def customer():
-    return Customer("Иван", "ivan@mail.ru", "bronze")
+    c = Customer("Иван", "ivan@mail.ru", "bronze")
+    c.id = 1
+    return c
 
 @pytest.fixture
 def product():
-    return Product("Пицца", 500, "Еда")
+    p = Product("Пицца", 500, "Еда")
+    p.id = 1
+    return p
 
 @pytest.fixture
 def order_item(product):
@@ -78,6 +82,7 @@ class TestCustomer:
 
     def test_eq_different_customers(self, customer):
         other = Customer("Мария", "maria@mail.ru")
+        other.id = 2
         assert customer != other
 
     def test_str(self, customer):
@@ -182,9 +187,9 @@ class TestOrder:
     def test_total(self, order):
         assert order.total == 1000
 
-    def test_empty_customer_id_raises(self, order_item):
+    def test_none_customer_id_raises(self, order_item):
         with pytest.raises(ValidationError):
-            Order("", [order_item])
+            Order(None, [order_item])
 
     def test_empty_items_raises(self, customer):
         with pytest.raises(ValidationError):
@@ -226,49 +231,54 @@ class TestOrder:
 # ── Warehouse ─────────────────────────────────────────────────────────────────
 
 class TestWarehouse:
-    def test_add_and_get_stock(self, product):
+    def test_add_and_get_stock(self):
         w = Warehouse()
-        w.add_stock(product.id, 10)
-        assert w.get_stock(product.id) == 10
+        w.add_stock(1, 10)
+        assert w.get_stock(1) == 10
 
-    def test_add_stock_accumulates(self, product):
+    def test_add_stock_accumulates(self):
         w = Warehouse()
-        w.add_stock(product.id, 5)
-        w.add_stock(product.id, 3)
-        assert w.get_stock(product.id) == 8
+        w.add_stock(1, 5)
+        w.add_stock(1, 3)
+        assert w.get_stock(1) == 8
 
-    def test_get_stock_missing_product(self, product):
+    def test_get_stock_missing_product(self):
         w = Warehouse()
-        assert w.get_stock(product.id) == 0
+        assert w.get_stock(99) == 0
 
-    def test_has_enough_true(self, product):
+    def test_has_enough_true(self):
         w = Warehouse()
-        w.add_stock(product.id, 10)
-        assert w.has_enough(product.id, 5) is True
+        w.add_stock(1, 10)
+        assert w.has_enough(1, 5) is True
 
-    def test_has_enough_false(self, product):
+    def test_has_enough_false(self):
         w = Warehouse()
-        w.add_stock(product.id, 2)
-        assert w.has_enough(product.id, 5) is False
+        w.add_stock(1, 2)
+        assert w.has_enough(1, 5) is False
 
-    def test_remove_stock(self, product):
+    def test_remove_stock(self):
         w = Warehouse()
-        w.add_stock(product.id, 10)
-        w.remove_stock(product.id, 4, product.name)
-        assert w.get_stock(product.id) == 6
+        w.add_stock(1, 10)
+        w.remove_stock(1, 4, "Пицца")
+        assert w.get_stock(1) == 6
 
-    def test_remove_stock_insufficient_raises(self, product):
+    def test_remove_stock_insufficient_raises(self):
         w = Warehouse()
-        w.add_stock(product.id, 2)
+        w.add_stock(1, 2)
         with pytest.raises(InsufficientStockError):
-            w.remove_stock(product.id, 5, product.name)
+            w.remove_stock(1, 5, "Пицца")
 
-    def test_add_stock_zero_raises(self, product):
+    def test_add_stock_none_id_raises(self):
         w = Warehouse()
         with pytest.raises(ValidationError):
-            w.add_stock(product.id, 0)
+            w.add_stock(None, 10)
 
-    def test_str(self, product):
+    def test_add_stock_zero_raises(self):
         w = Warehouse()
-        w.add_stock(product.id, 5)
+        with pytest.raises(ValidationError):
+            w.add_stock(1, 0)
+
+    def test_str(self):
+        w = Warehouse()
+        w.add_stock(1, 5)
         assert "1" in str(w)
