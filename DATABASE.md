@@ -1,9 +1,5 @@
 # DATABASE — Схема базы данных
 
-Проект использует PostgreSQL с 7 таблицами в третьей нормальной форме (3НФ).
-
----
-
 ## Изображение связей
 
 ![фото](/home/flipixcool/Documents/python/lab_oop/images/deepseek_mermaid_20260402_401032.png)
