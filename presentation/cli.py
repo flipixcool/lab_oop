@@ -3,6 +3,7 @@ from service.product_service import ProductService
 from service.order_service import OrderService
 from domain.strategies import LoyaltyDiscount, NoDiscount
 from domain.exceptions import ShopError
+from domain.utils import format_customer_id, format_product_id, format_order_id, parse_id
 
 
 class CLI:
@@ -61,18 +62,18 @@ class CLI:
             if not customers:
                 print("Клиентов нет.")
             for c in customers:
-                print(f"  {c} | {c.loyalty_level.value}")
+                print(f"  {format_customer_id(c.id)} | {c.name} | {c.email} | {c.loyalty_level.value}")
 
         elif choice == "3":
-            customer_id = input("ID клиента: ").strip()
-            if self._cs.delete_customer(customer_id):
+            raw = input("ID клиента (например C-001): ").strip()
+            if self._cs.delete_customer(parse_id(raw)):
                 print("Удалён.")
             else:
                 print("Клиент не найден.")
 
         elif choice == "4":
-            customer_id = input("ID клиента: ").strip()
-            c = self._cs.upgrade_loyalty(customer_id)
+            raw = input("ID клиента (например C-001): ").strip()
+            c = self._cs.upgrade_loyalty(parse_id(raw))
             print(f"Уровень лояльности: {c.loyalty_level.value}")
 
     # ── Товары ────────────────────────────────────────────────────────────────
@@ -90,7 +91,7 @@ class CLI:
             price = float(input("Цена: ").strip())
             category = input("Категория: ").strip()
             p = self._ps.create_product(name, price, category)
-            print(f"Создан: {p} (ID: {p.id})")
+            print(f"Создан: {p} (ID: {format_product_id(p.id)})")
 
         elif choice == "2":
             products = self._ps.get_all_products()
@@ -99,17 +100,17 @@ class CLI:
             for p in products:
                 stock = self._ps.get_stock(p.id)
                 status = "активен" if p.is_active else "неактивен"
-                print(f"  {p} | склад: {stock} | {status} | ID: {p.id}")
+                print(f"  {format_product_id(p.id)} | {p} | склад: {stock} | {status}")
 
         elif choice == "3":
-            product_id = input("ID товара: ").strip()
+            raw = input("ID товара (например P-001): ").strip()
             new_price = float(input("Новая цена: ").strip())
-            p = self._ps.update_price(product_id, new_price)
+            p = self._ps.update_price(parse_id(raw), new_price)
             print(f"Обновлён: {p}")
 
         elif choice == "4":
-            product_id = input("ID товара: ").strip()
-            p = self._ps.deactivate_product(product_id)
+            raw = input("ID товара (например P-001): ").strip()
+            p = self._ps.deactivate_product(parse_id(raw))
             print(f"Деактивирован: {p.name}")
 
     # ── Склад ─────────────────────────────────────────────────────────────────
@@ -121,26 +122,29 @@ class CLI:
         choice = input("Выбор: ").strip()
 
         if choice == "1":
-            product_id = input("ID товара: ").strip()
+            raw = input("ID товара (например P-001): ").strip()
+            product_id = parse_id(raw)
             quantity = int(input("Количество: ").strip())
             self._ps.add_stock(product_id, quantity)
             print(f"Добавлено. Остаток: {self._ps.get_stock(product_id)}")
 
         elif choice == "2":
-            product_id = input("ID товара: ").strip()
+            raw = input("ID товара (например P-001): ").strip()
+            product_id = parse_id(raw)
             print(f"Остаток: {self._ps.get_stock(product_id)}")
 
     # ── Заказы ────────────────────────────────────────────────────────────────
 
     def _create_order(self):
-        customer_id = input("ID клиента: ").strip()
+        raw = input("ID клиента (например C-001): ").strip()
+        customer_id = parse_id(raw)
         items_data = []
         while True:
-            product_id = input("ID товара (или Enter чтобы завершить): ").strip()
-            if not product_id:
+            raw_p = input("ID товара (например P-001, или Enter чтобы завершить): ").strip()
+            if not raw_p:
                 break
             quantity = int(input("Количество: ").strip())
-            items_data.append({"product_id": product_id, "quantity": quantity})
+            items_data.append({"product_id": parse_id(raw_p), "quantity": quantity})
 
         if not items_data:
             print("Нет позиций — заказ не создан.")
@@ -155,8 +159,8 @@ class CLI:
         print(f"Итого к оплате: {total}₽")
 
     def _show_customer_orders(self):
-        customer_id = input("ID клиента: ").strip()
-        orders = self._os.get_customer_orders(customer_id)
+        raw = input("ID клиента (например C-001): ").strip()
+        orders = self._os.get_customer_orders(parse_id(raw))
         if not orders:
             print("Заказов нет.")
             return
@@ -164,8 +168,8 @@ class CLI:
             print(f"  {o}")
 
     def _change_order_status(self):
-        order_id = input("ID заказа: ").strip()
+        raw = input("ID заказа (например O-001): ").strip()
         print("Статусы: pending / confirmed / shipped / delivered / cancelled")
         new_status = input("Новый статус: ").strip()
-        order = self._os.change_order_status(order_id, new_status)
+        order = self._os.change_order_status(parse_id(raw), new_status)
         print(f"Статус обновлён: {order.status.value}")

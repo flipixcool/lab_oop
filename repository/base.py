@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Callable
-from uuid import uuid4
 from domain.exceptions import EntityNotFoundError
 
 T = TypeVar('T')
@@ -11,13 +10,13 @@ class Repository(ABC, Generic[T]):
     def add(self, entity: T) -> T: ...
 
     @abstractmethod
-    def get(self, id: str) -> T | None: ...
+    def get(self, id: int) -> T | None: ...
 
     @abstractmethod
     def update(self, entity: T) -> T: ...
 
     @abstractmethod
-    def delete(self, id: str) -> bool: ...
+    def delete(self, id: int) -> bool: ...
 
     @abstractmethod
     def find_all(self) -> list[T]: ...
@@ -28,18 +27,16 @@ class Repository(ABC, Generic[T]):
 
 class InMemoryRepository(Repository[T]):
     def __init__(self):
-        self._storage: dict[str, T] = {}
+        self._storage: dict[int, T] = {}
+        self._next_id: int = 1
 
     def add(self, entity: T) -> T:
-        entity_id = getattr(entity, 'id', None)
-        if not entity_id or entity_id in self._storage:
-            if entity_id in self._storage:
-                del self._storage[entity_id]
-            entity.id = str(uuid4())
+        entity.id = self._next_id
+        self._next_id += 1
         self._storage[entity.id] = entity
         return entity
 
-    def get(self, id: str) -> T | None:
+    def get(self, id: int) -> T | None:
         return self._storage.get(id)
 
     def update(self, entity: T) -> T:
@@ -48,7 +45,7 @@ class InMemoryRepository(Repository[T]):
         self._storage[entity.id] = entity
         return entity
 
-    def delete(self, id: str) -> bool:
+    def delete(self, id: int) -> bool:
         if id not in self._storage:
             return False
         del self._storage[id]

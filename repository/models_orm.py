@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float, Integer, Boolean, ForeignKey, DateTime, Enum as SAEnum
+from sqlalchemy import Integer, String, Float, Boolean, ForeignKey, DateTime, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from db import Base
@@ -8,7 +8,7 @@ from domain.model import OrderStatus, LoyaltyLevel
 class CustomerORM(Base):
     __tablename__ = "customers"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     loyalty_level: Mapped[str] = mapped_column(
@@ -24,7 +24,7 @@ class CustomerORM(Base):
 class ProductORM(Base):
     __tablename__ = "products"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     category: Mapped[str] = mapped_column(String, nullable=False)
@@ -36,8 +36,8 @@ class ProductORM(Base):
 class OrderORM(Base):
     __tablename__ = "orders"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-    customer_id: Mapped[str] = mapped_column(String, ForeignKey("customers.id"), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey("customers.id"), nullable=False)
     status: Mapped[str] = mapped_column(
         SAEnum(OrderStatus, values_callable=lambda e: [x.value for x in e]),
         nullable=False,
@@ -54,8 +54,8 @@ class OrderItemORM(Base):
     __tablename__ = "order_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    order_id: Mapped[str] = mapped_column(String, ForeignKey("orders.id"), nullable=False)
-    product_id: Mapped[str] = mapped_column(String, ForeignKey("products.id"), nullable=False)
+    order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id"), nullable=False)
+    product_id: Mapped[int] = mapped_column(Integer, ForeignKey("products.id"), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[float] = mapped_column(Float, nullable=False)
 

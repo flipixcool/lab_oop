@@ -1,4 +1,3 @@
-from uuid import uuid4
 from enum import Enum
 from typing import List, Dict
 from datetime import datetime
@@ -28,14 +27,14 @@ class Customer:
         name: str,
         email: str,
         loyalty_level: str = "bronze",
-        id: str | None = None,
+        id: int | None = None,
         created_at: datetime | None = None,
     ):
         Validators.validate_not_empty(name, "Имя")
         Validators.validate_not_empty(email, "Email")
 
         Customer.total_customers += 1
-        self.id = id or str(uuid4())
+        self.id = id
         self.name = name
         self.email = email
         self._loyalty_level = LoyaltyLevel(loyalty_level)
@@ -62,7 +61,9 @@ class Customer:
         self.loyalty_level = LoyaltyLevel.BRONZE.value
 
     def __str__(self):
-        return f"{self.name} <{self.email}> (ID: {self.id})"
+        from domain.utils import format_customer_id
+        id_str = format_customer_id(self.id) if self.id else "C-???"
+        return f"{self.name} <{self.email}> (ID: {id_str})"
 
     def __eq__(self, other):
         if isinstance(other, Customer):
@@ -79,14 +80,14 @@ class Product:
         name: str,
         price: float,
         category: str,
-        id: str | None = None,
+        id: int | None = None,
         is_active: bool = True,
     ):
         Validators.validate_not_empty(name, "Название товара")
         Validators.validate_positive(price, "Цена")
         Validators.validate_not_empty(category, "Категория")
 
-        self.id = id or str(uuid4())
+        self.id = id
         self.name = name
         self._price = price
         self.category = category
@@ -137,19 +138,18 @@ class OrderItem:
 class Order:
     def __init__(
         self,
-        customer_id: str,
+        customer_id: int,
         items: List[OrderItem],
         status: str = "pending",
         discount: float = 0.0,
-        id: str | None = None,
+        id: int | None = None,
         created_at: datetime | None = None,
     ):
-        Validators.validate_not_empty(customer_id, "ID клиента")
         Validators.validate_not_empty(items, "Список товаров")
         Validators.validate_non_negative(discount, "Скидка")
         Validators.validate_range(discount, "Скидка", 0, 100)
 
-        self.id = id or str(uuid4())
+        self.id = id
         self.customer_id = customer_id
         self.items = items
         self.status = OrderStatus(status)
@@ -171,28 +171,31 @@ class Order:
         return self.created_at < other.created_at
 
     def __str__(self):
-        return f"Заказ #{self.id[:8]} | {self.total}₽ | {self.status.value}"
+        from domain.utils import format_order_id
+        id_str = format_order_id(self.id) if self.id else "O-???"
+        return f"Заказ {id_str} | {self.total}₽ | {self.status.value}"
 
 
 class Warehouse:
     def __init__(self):
-        self._stock: Dict[str, int] = {}
+        self._stock: Dict[int, int] = {}
 
-    def add_stock(self, product_id: str, quantity: int):
-        Validators.validate_not_empty(product_id, "ID товара")
+    def add_stock(self, product_id: int, quantity: int):
+        if product_id is None:
+            raise ValidationError("ID товара не может быть пустым", "ID товара")
         Validators.validate_positive(quantity, "Количество")
         self._stock[product_id] = self._stock.get(product_id, 0) + quantity
 
-    def get_stock(self, product_id: str) -> int:
+    def get_stock(self, product_id: int) -> int:
         return self._stock.get(product_id, 0)
 
-    def has_enough(self, product_id: str, quantity: int) -> bool:
+    def has_enough(self, product_id: int, quantity: int) -> bool:
         return self.get_stock(product_id) >= quantity
 
-    def remove_stock(self, product_id: str, quantity: int, product_name: str = ""):
+    def remove_stock(self, product_id: int, quantity: int, product_name: str = ""):
         available = self.get_stock(product_id)
         if quantity > available:
-            raise InsufficientStockError(product_name or product_id, quantity, available)
+            raise InsufficientStockError(product_name or str(product_id), quantity, available)
         self._stock[product_id] -= quantity
 
     def __str__(self):

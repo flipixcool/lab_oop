@@ -9,6 +9,7 @@ from domain.exceptions import (
 )
 from domain.validators import Validators
 from domain.containers import EntityCollection
+from domain.utils import format_customer_id, format_product_id, format_order_id, parse_id
 from domain.model import (
     OrderStatus,
     LoyaltyLevel,
@@ -36,4 +37,8 @@ __all__ = [
     "Order",
     "Warehouse",
     "EntityCollection",
+    "format_customer_id",
+    "format_product_id",
+    "format_order_id",
+    "parse_id",
 ]

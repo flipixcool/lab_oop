@@ -1,20 +1,20 @@
-from typing import Callable, TypeVar
+from typing import Callable
 from sqlalchemy.orm import Session
 from repository.base import Repository
 from repository.models_orm import CustomerORM, ProductORM, OrderORM, OrderItemORM
 from domain.model import Customer, Product, Order, OrderItem, LoyaltyLevel, OrderStatus
 
-T = TypeVar('T')
-
 
 def _customer_to_orm(c: Customer) -> CustomerORM:
-    return CustomerORM(
-        id=c.id,
+    orm = CustomerORM(
         name=c.name,
         email=c.email,
         loyalty_level=c.loyalty_level.value,
         created_at=c.created_at,
     )
+    if c.id:
+        orm.id = c.id
+    return orm
 
 
 def _orm_to_customer(orm: CustomerORM) -> Customer:
@@ -28,13 +28,15 @@ def _orm_to_customer(orm: CustomerORM) -> Customer:
 
 
 def _product_to_orm(p: Product) -> ProductORM:
-    return ProductORM(
-        id=p.id,
+    orm = ProductORM(
         name=p.name,
         price=p.price,
         category=p.category,
         is_active=p.is_active,
     )
+    if p.id:
+        orm.id = p.id
+    return orm
 
 
 def _orm_to_product(orm: ProductORM) -> Product:
@@ -49,15 +51,15 @@ def _orm_to_product(orm: ProductORM) -> Product:
 
 def _order_to_orm(o: Order) -> OrderORM:
     orm = OrderORM(
-        id=o.id,
         customer_id=o.customer_id,
         status=o.status.value,
         discount=o.discount,
         created_at=o.created_at,
     )
+    if o.id:
+        orm.id = o.id
     orm.items = [
         OrderItemORM(
-            order_id=o.id,
             product_id=item.product.id,
             quantity=item.quantity,
             unit_price=item.unit_price,
@@ -67,7 +69,7 @@ def _order_to_orm(o: Order) -> OrderORM:
     return orm
 
 
-def _orm_to_order(orm: OrderORM, products: dict[str, Product]) -> Order:
+def _orm_to_order(orm: OrderORM, products: dict[int, Product]) -> Order:
     items = [
         _orm_item_to_domain(i, products[i.product_id])
         for i in orm.items
@@ -96,11 +98,14 @@ class CustomerPostgresRepository(Repository[Customer]):
         self._session = session
 
     def add(self, entity: Customer) -> Customer:
-        self._session.add(_customer_to_orm(entity))
+        orm = _customer_to_orm(entity)
+        self._session.add(orm)
         self._session.commit()
+        self._session.refresh(orm)
+        entity.id = orm.id
         return entity
 
-    def get(self, id: str) -> Customer | None:
+    def get(self, id: int) -> Customer | None:
         orm = self._session.get(CustomerORM, id)
         return _orm_to_customer(orm) if orm else None
 
@@ -115,7 +120,7 @@ class CustomerPostgresRepository(Repository[Customer]):
         self._session.commit()
         return entity
 
-    def delete(self, id: str) -> bool:
+    def delete(self, id: int) -> bool:
         orm = self._session.get(CustomerORM, id)
         if not orm:
             return False
@@ -135,11 +140,14 @@ class ProductPostgresRepository(Repository[Product]):
         self._session = session
 
     def add(self, entity: Product) -> Product:
-        self._session.add(_product_to_orm(entity))
+        orm = _product_to_orm(entity)
+        self._session.add(orm)
         self._session.commit()
+        self._session.refresh(orm)
+        entity.id = orm.id
         return entity
 
-    def get(self, id: str) -> Product | None:
+    def get(self, id: int) -> Product | None:
         orm = self._session.get(ProductORM, id)
         return _orm_to_product(orm) if orm else None
 
@@ -155,7 +163,7 @@ class ProductPostgresRepository(Repository[Product]):
         self._session.commit()
         return entity
 
-    def delete(self, id: str) -> bool:
+    def delete(self, id: int) -> bool:
         orm = self._session.get(ProductORM, id)
         if not orm:
             return False
@@ -174,17 +182,20 @@ class OrderPostgresRepository(Repository[Order]):
     def __init__(self, session: Session):
         self._session = session
 
-    def _load_products(self, items: list[OrderItemORM]) -> dict[str, Product]:
+    def _load_products(self, items: list[OrderItemORM]) -> dict[int, Product]:
         ids = {i.product_id for i in items}
         orms = self._session.query(ProductORM).filter(ProductORM.id.in_(ids)).all()
         return {o.id: _orm_to_product(o) for o in orms}
 
     def add(self, entity: Order) -> Order:
-        self._session.add(_order_to_orm(entity))
+        orm = _order_to_orm(entity)
+        self._session.add(orm)
         self._session.commit()
+        self._session.refresh(orm)
+        entity.id = orm.id
         return entity
 
-    def get(self, id: str) -> Order | None:
+    def get(self, id: int) -> Order | None:
         orm = self._session.get(OrderORM, id)
         if not orm:
             return None
@@ -200,7 +211,7 @@ class OrderPostgresRepository(Repository[Order]):
         self._session.commit()
         return entity
 
-    def delete(self, id: str) -> bool:
+    def delete(self, id: int) -> bool:
         orm = self._session.get(OrderORM, id)
         if not orm:
             return False
