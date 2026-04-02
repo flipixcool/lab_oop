@@ -23,11 +23,6 @@ CLI-приложение для управления интернет-магаз
     PostgreSQL
 ```
 
-**Зависимости между слоями:**
-```
-presentation → service → repository → domain
-```
-
 ### Структура проекта
 ```
 lab_oop/
@@ -41,7 +36,7 @@ lab_oop/
 ├── repository/          # Абстракция данных
 │   ├── base.py          # Repository[T] (ABC Generic)
 │   ├── postgres.py      # PostgreSQL реализация
-│   ├── models_orm.py    # SQLAlchemy ORM модели
+│   ├── models_orm.py    # SQLAlchemy ORM модели (7 таблиц)
 │   └── migrations/      # Alembic миграции
 ├── service/             # Бизнес-логика
 │   ├── customer_service.py
@@ -52,6 +47,7 @@ lab_oop/
 ├── tests/               # Unit-тесты (100% покрытие domain)
 ├── db.py                # SQLAlchemy engine + session
 ├── main.py              # Точка входа
+├── DATABASE.md          # Схема БД с диаграммой всех 7 таблиц
 ├── requirements.txt
 ├── alembic.ini
 └── .env.example
@@ -84,6 +80,20 @@ lab_oop/
 - Управление складом (добавление товара)
 - Просмотр всех заказов
 - Изменение статусов заказов
+
+### 3. База данных в 3НФ — 7 таблиц
+
+Схема нормализована до третьей нормальной формы:
+
+- **`customers`** — клиенты с раздельными полями `first_name` / `last_name`
+- **`categories`** — справочник категорий (вынесен из `products` для соблюдения 3НФ)
+- **`products`** — товары со ссылкой на `category_id`
+- **`orders`** — заголовки заказов
+- **`order_items`** — позиции заказов (товар, количество, цена на момент заказа)
+- **`warehouse`** — текущие остатки товаров (персистентное хранение в БД)
+- **`archived_orders`** — история выполненных/отменённых заказов
+
+Подробная схема с диаграммой связей — в [DATABASE.md](DATABASE.md).
 
 ---
 
@@ -167,7 +177,7 @@ pytest tests/ -v
 pytest tests/ --cov=domain --cov-report=term-missing
 ```
 
-**Результат:** 105 тестов, 100% покрытие domain-слоя.
+**Результат:** 124 тестов, 100% покрытие domain-слоя.
 
 ---
 
@@ -179,10 +189,11 @@ pytest tests/ --cov=domain --cov-report=term-missing
 ```
 Выбор: 2 (Админ) → 1 (Управление клиентами) → 1 (Создать)
 Имя: Иван
+Фамилия: Иванов
 Email: ivan@example.com
 Уровень лояльности: bronze
 
-→ Создан: C-001 | Иван <ivan@example.com>
+→ Создан: C-001 | Иван Иванов <ivan@example.com>
 ```
 
 **2. Добавить товар:**
@@ -210,7 +221,7 @@ ID товара: P-001
 ID товара: P-001
 Количество: 2
 
-→ Заказ O-001 создан! Итого: 85000₽ (скидка 15% для bronze)
+→ Заказ O-001 создан! Итого: 85000₽ (скидка 15% для gold)
 ```
 
 ---
@@ -229,18 +240,18 @@ ID товара: P-001
 ### Функциональные требования
 
 - ✅ **CRUD клиентов и товаров**
-- ✅ **Учёт остатка товара** через класс `Warehouse`
+- ✅ **Учёт остатка товара** через `DBWarehouse` (персистентно в PostgreSQL)
 - ✅ **Создание заказа** из нескольких позиций (`OrderItem`)
 - ✅ **Скидки/бонусная система** через паттерн Strategy
 - ✅ **Статусы заказа** (`Enum OrderStatus`)
 - ✅ **Поиск, фильтрация, сортировка** через `EntityCollection[T]`
 - ✅ **История заказов клиента** (`OrderService.get_customer_orders`)
-- ✅ **Отчёты** по заказам и остаткам
+- ✅ **Архивирование заказов** в `archived_orders`
 
 ### Технические требования
 
 - ✅ **PostgreSQL** через SQLAlchemy + Alembic миграции
-- ✅ **Минимум 4 таблицы** в 3НФ (customers, products, orders, order_items)
+- ✅ **7 таблиц** в 3НФ (см. [DATABASE.md](DATABASE.md))
 - ✅ **Модульность:** 4 слоя (domain, repository, service, presentation)
 - ✅ **Пользовательские исключения:** 6 классов (`ShopError` → ...)
 - ✅ **Магические методы:** `__str__`, `__eq__`, `__lt__`, `__len__`, `__iter__`, `__getitem__`, `__repr__`
@@ -253,11 +264,5 @@ ID товара: P-001
 - **Файлов Python:** 25
 - **Строк кода:** ~1900
 - **Тестов:** 105 (100% покрытие domain)
-- **Таблиц БД:** 4 (3НФ)
+- **Таблиц БД:** 7 (3НФ)
 - **Паттернов:** Strategy, Repository, Generic Container, Layered Architecture
-
----
-
-## 📝 Лицензия
-
-Проект создан в учебных целях.
