@@ -145,6 +145,9 @@ class Order:
         id: int | None = None,
         created_at: datetime | None = None,
     ):
+        if customer_id is None:
+            from domain.exceptions import ValidationError
+            raise ValidationError("ID клиента", "не может быть None")
         Validators.validate_not_empty(items, "Список товаров")
         Validators.validate_non_negative(discount, "Скидка")
         Validators.validate_range(discount, "Скидка", 0, 100)
