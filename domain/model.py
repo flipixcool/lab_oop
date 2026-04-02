@@ -24,21 +24,28 @@ class Customer:
 
     def __init__(
         self,
-        name: str,
+        first_name: str,
+        last_name: str,
         email: str,
         loyalty_level: str = "bronze",
         id: int | None = None,
         created_at: datetime | None = None,
     ):
-        Validators.validate_not_empty(name, "Имя")
+        Validators.validate_not_empty(first_name, "Имя")
+        Validators.validate_not_empty(last_name, "Фамилия")
         Validators.validate_not_empty(email, "Email")
 
         Customer.total_customers += 1
         self.id = id
-        self.name = name
+        self.first_name = first_name
+        self.last_name = last_name
         self.email = email
         self._loyalty_level = LoyaltyLevel(loyalty_level)
         self.created_at = created_at or datetime.now()
+
+    @property
+    def name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
 
     @property
     def loyalty_level(self) -> LoyaltyLevel:
@@ -71,7 +78,7 @@ class Customer:
         return False
 
     def __repr__(self):
-        return f"Customer('{self.name}', '{self.email}', {self.loyalty_level})"
+        return f"Customer('{self.first_name}', '{self.last_name}', '{self.email}', {self.loyalty_level})"
 
 
 class Product:

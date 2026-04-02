@@ -12,26 +12,26 @@ class ProductService:
         product = Product(name, price, category)
         return self._repo.add(product)
 
-    def get_product(self, id: str) -> Product | None:
+    def get_product(self, id: int) -> Product | None:
         return self._repo.get(id)
 
     def get_all_products(self) -> list[Product]:
         return self._repo.find_all()
 
-    def update_price(self, product_id: str, new_price: float) -> Product:
+    def update_price(self, product_id: int, new_price: float) -> Product:
         product = self._repo.get(product_id)
         if not product:
             raise ProductNotFoundError(f"Product '{product_id}' not found")
         product.price = new_price
         return self._repo.update(product)
 
-    def add_stock(self, product_id: str, quantity: int) -> None:
+    def add_stock(self, product_id: int, quantity: int) -> None:
         self._warehouse.add_stock(product_id, quantity)
 
-    def get_stock(self, product_id: str) -> int:
+    def get_stock(self, product_id: int) -> int:
         return self._warehouse.get_stock(product_id)
 
-    def deactivate_product(self, product_id: str) -> Product:
+    def deactivate_product(self, product_id: int) -> Product:
         product = self._repo.get(product_id)
         if not product:
             raise ProductNotFoundError(f"Product '{product_id}' not found")

@@ -9,7 +9,7 @@ DB_URL = os.getenv("DB_URL")
 if not DB_URL:
     raise RuntimeError("DB_URL не задан. Проверь файл .env")
 
-engine = create_engine(DB_URL, pool_pre_ping=True)
+engine = create_engine(DB_URL, pool_pre_ping=True, connect_args={"connect_timeout": 5})
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 

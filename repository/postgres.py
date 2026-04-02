@@ -1,13 +1,15 @@
 from typing import Callable
 from sqlalchemy.orm import Session
 from repository.base import Repository
-from repository.models_orm import CustomerORM, ProductORM, OrderORM, OrderItemORM
+from repository.models_orm import CustomerORM, ProductORM, CategoryORM, OrderORM, OrderItemORM, WarehouseORM
+from domain.exceptions import InsufficientStockError
 from domain.model import Customer, Product, Order, OrderItem, LoyaltyLevel, OrderStatus
 
 
 def _customer_to_orm(c: Customer) -> CustomerORM:
     orm = CustomerORM(
-        name=c.name,
+        first_name=c.first_name,
+        last_name=c.last_name,
         email=c.email,
         loyalty_level=c.loyalty_level.value,
         created_at=c.created_at,
@@ -20,23 +22,12 @@ def _customer_to_orm(c: Customer) -> CustomerORM:
 def _orm_to_customer(orm: CustomerORM) -> Customer:
     c = Customer.__new__(Customer)
     c.id = orm.id
-    c.name = orm.name
+    c.first_name = orm.first_name
+    c.last_name = orm.last_name
     c.email = orm.email
     c._loyalty_level = LoyaltyLevel(orm.loyalty_level)
     c.created_at = orm.created_at
     return c
-
-
-def _product_to_orm(p: Product) -> ProductORM:
-    orm = ProductORM(
-        name=p.name,
-        price=p.price,
-        category=p.category,
-        is_active=p.is_active,
-    )
-    if p.id:
-        orm.id = p.id
-    return orm
 
 
 def _orm_to_product(orm: ProductORM) -> Product:
@@ -44,7 +35,7 @@ def _orm_to_product(orm: ProductORM) -> Product:
     p.id = orm.id
     p.name = orm.name
     p._price = orm.price
-    p.category = orm.category
+    p.category = orm.category_rel.name
     p.is_active = orm.is_active
     return p
 
@@ -139,8 +130,24 @@ class ProductPostgresRepository(Repository[Product]):
     def __init__(self, session: Session):
         self._session = session
 
+    def _get_or_create_category(self, name: str) -> CategoryORM:
+        cat = self._session.query(CategoryORM).filter_by(name=name).first()
+        if not cat:
+            cat = CategoryORM(name=name)
+            self._session.add(cat)
+            self._session.flush()
+        return cat
+
     def add(self, entity: Product) -> Product:
-        orm = _product_to_orm(entity)
+        cat = self._get_or_create_category(entity.category)
+        orm = ProductORM(
+            name=entity.name,
+            price=entity.price,
+            category_id=cat.id,
+            is_active=entity.is_active,
+        )
+        if entity.id:
+            orm.id = entity.id
         self._session.add(orm)
         self._session.commit()
         self._session.refresh(orm)
@@ -156,9 +163,10 @@ class ProductPostgresRepository(Repository[Product]):
         if not orm:
             from domain.exceptions import ProductNotFoundError
             raise ProductNotFoundError(f"Product '{entity.id}' not found")
+        cat = self._get_or_create_category(entity.category)
         orm.name = entity.name
         orm.price = entity.price
-        orm.category = entity.category
+        orm.category_id = cat.id
         orm.is_active = entity.is_active
         self._session.commit()
         return entity
@@ -225,3 +233,32 @@ class OrderPostgresRepository(Repository[Order]):
 
     def find_by(self, predicate: Callable[[Order], bool]) -> list[Order]:
         return [o for o in self.find_all() if predicate(o)]
+
+
+class DBWarehouse:
+    def __init__(self, session: Session):
+        self._session = session
+
+    def add_stock(self, product_id: int, quantity: int) -> None:
+        row = self._session.get(WarehouseORM, product_id)
+        if row:
+            row.quantity += quantity
+        else:
+            row = WarehouseORM(product_id=product_id, quantity=quantity)
+            self._session.add(row)
+        self._session.commit()
+
+    def get_stock(self, product_id: int) -> int:
+        row = self._session.get(WarehouseORM, product_id)
+        return row.quantity if row else 0
+
+    def has_enough(self, product_id: int, quantity: int) -> bool:
+        return self.get_stock(product_id) >= quantity
+
+    def remove_stock(self, product_id: int, quantity: int, product_name: str = "") -> None:
+        available = self.get_stock(product_id)
+        if quantity > available:
+            raise InsufficientStockError(product_name or str(product_id), quantity, available)
+        row = self._session.get(WarehouseORM, product_id)
+        row.quantity -= quantity
+        self._session.commit()

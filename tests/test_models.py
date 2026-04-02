@@ -7,7 +7,7 @@ from domain.exceptions import ValidationError, InsufficientStockError
 
 @pytest.fixture
 def customer():
-    c = Customer("Иван", "ivan@mail.ru", "bronze")
+    c = Customer("Иван", "Иванов", "ivan@mail.ru", "bronze")
     c.id = 1
     return c
 
@@ -30,21 +30,27 @@ def order(customer, order_item):
 
 class TestCustomer:
     def test_create_valid(self, customer):
-        assert customer.name == "Иван"
+        assert customer.first_name == "Иван"
+        assert customer.last_name == "Иванов"
+        assert customer.name == "Иван Иванов"
         assert customer.email == "ivan@mail.ru"
         assert customer.loyalty_level == LoyaltyLevel.BRONZE
 
-    def test_empty_name_raises(self):
+    def test_empty_first_name_raises(self):
         with pytest.raises(ValidationError):
-            Customer("", "ivan@mail.ru")
+            Customer("", "Иванов", "ivan@mail.ru")
+
+    def test_empty_last_name_raises(self):
+        with pytest.raises(ValidationError):
+            Customer("Иван", "", "ivan@mail.ru")
 
     def test_empty_email_raises(self):
         with pytest.raises(ValidationError):
-            Customer("Иван", "")
+            Customer("Иван", "Иванов", "")
 
     def test_invalid_loyalty_level_raises(self):
         with pytest.raises(ValueError):
-            Customer("Иван", "ivan@mail.ru", "vip")
+            Customer("Иван", "Иванов", "ivan@mail.ru", "vip")
 
     def test_loyalty_level_setter(self, customer):
         customer.loyalty_level = "gold"
@@ -81,17 +87,19 @@ class TestCustomer:
         assert customer == customer
 
     def test_eq_different_customers(self, customer):
-        other = Customer("Мария", "maria@mail.ru")
+        other = Customer("Мария", "Петрова", "maria@mail.ru")
         other.id = 2
         assert customer != other
 
     def test_str(self, customer):
         assert "Иван" in str(customer)
+        assert "Иванов" in str(customer)
         assert "ivan@mail.ru" in str(customer)
 
     def test_repr(self, customer):
         assert "Customer(" in repr(customer)
         assert "Иван" in repr(customer)
+        assert "Иванов" in repr(customer)
 
     def test_eq_non_customer(self, customer):
         assert customer != "not a customer"

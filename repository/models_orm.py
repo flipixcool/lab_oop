@@ -9,7 +9,8 @@ class CustomerORM(Base):
     __tablename__ = "customers"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    first_name: Mapped[str] = mapped_column(String, nullable=False)
+    last_name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     loyalty_level: Mapped[str] = mapped_column(
         SAEnum(LoyaltyLevel, values_callable=lambda e: [x.value for x in e]),
@@ -21,15 +22,25 @@ class CustomerORM(Base):
     orders: Mapped[list["OrderORM"]] = relationship("OrderORM", back_populates="customer")
 
 
+class CategoryORM(Base):
+    __tablename__ = "categories"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+
+    products: Mapped[list["ProductORM"]] = relationship("ProductORM", back_populates="category_rel")
+
+
 class ProductORM(Base):
     __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
-    category: Mapped[str] = mapped_column(String, nullable=False)
+    category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    category_rel: Mapped["CategoryORM"] = relationship("CategoryORM", back_populates="products")
     order_items: Mapped[list["OrderItemORM"]] = relationship("OrderItemORM", back_populates="product")
 
 
@@ -61,3 +72,10 @@ class OrderItemORM(Base):
 
     order: Mapped["OrderORM"] = relationship("OrderORM", back_populates="items")
     product: Mapped["ProductORM"] = relationship("ProductORM", back_populates="order_items")
+
+
+class WarehouseORM(Base):
+    __tablename__ = "warehouse"
+
+    product_id: Mapped[int] = mapped_column(Integer, ForeignKey("products.id"), primary_key=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

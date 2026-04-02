@@ -5,7 +5,7 @@ from domain.strategies import NoDiscount, LoyaltyDiscount
 
 @pytest.fixture
 def order():
-    customer = Customer("Иван", "ivan@mail.ru", "bronze")
+    customer = Customer("Иван", "Иванов", "ivan@mail.ru", "bronze")
     customer.id = 1
     product = Product("Пицца", 1000, "Еда")
     item = OrderItem(product, 1)

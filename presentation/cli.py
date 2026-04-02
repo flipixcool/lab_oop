@@ -5,9 +5,6 @@ from domain.strategies import LoyaltyDiscount, NoDiscount
 from domain.exceptions import ShopError
 from domain.utils import format_customer_id, format_product_id, format_order_id, parse_id
 
-_CURRENT_USER_ID = 1
-
-
 class CLI:
     def __init__(self, customer_service: CustomerService, product_service: ProductService, order_service: OrderService):
         self._cs = customer_service
@@ -34,6 +31,12 @@ class CLI:
     # ── Панель пользователя ───────────────────────────────────────────────────
 
     def _user_panel(self):
+        customer = self._login()
+        if not customer:
+            return
+
+        print(f"\nДобро пожаловать, {customer.name}! (ID: {format_customer_id(customer.id)})")
+
         while True:
             print("\n=== Панель пользователя ===")
             print("  1. Показать товары")
@@ -46,11 +49,39 @@ class CLI:
             elif choice == "1":
                 self._run(self._show_products)
             elif choice == "2":
-                self._run(self._create_order_user)
+                self._run(lambda: self._create_order_user(customer.id))
             elif choice == "3":
-                self._run(self._my_orders)
+                self._run(lambda: self._my_orders(customer.id))
             else:
                 print("Неверный выбор.")
+
+    def _login(self):
+        print("\n--- Вход ---")
+        first_name = input("Имя: ").strip()
+        last_name = input("Фамилия: ").strip()
+        if not first_name or not last_name:
+            print("Отменено.")
+            return None
+        matches = self._cs.find_by_name(first_name, last_name)
+        if not matches:
+            print(f"Клиент '{first_name} {last_name}' не найден.")
+            return None
+        if len(matches) > 1:
+            print("Найдено несколько клиентов:")
+            for c in matches:
+                print(f"  {format_customer_id(c.id)} | {c.name} | {c.email}")
+            raw = input("Введите ID (например C-001): ").strip()
+            try:
+                cid = parse_id(raw)
+                customer = next((c for c in matches if c.id == cid), None)
+                if not customer:
+                    print("Неверный ID.")
+                    return None
+                return customer
+            except (ValueError, IndexError):
+                print("Неверный формат.")
+                return None
+        return matches[0]
 
     def _show_products(self):
         products = [p for p in self._ps.get_all_products() if p.is_active]
@@ -61,8 +92,7 @@ class CLI:
             stock = self._ps.get_stock(p.id)
             print(f"  {format_product_id(p.id)} | {p.name} | {p.price}₽ | склад: {stock}")
 
-    def _create_order_user(self):
-        customer_id = _CURRENT_USER_ID
+    def _create_order_user(self, customer_id: int):
         items_data = []
         while True:
             raw_p = input("ID товара (например P-001, или Enter чтобы завершить): ").strip()
@@ -83,8 +113,8 @@ class CLI:
         total = self._os.calculate_total_with_discount(order.id, customer_id, strategy)
         print(f"Итого к оплате: {total}₽")
 
-    def _my_orders(self):
-        orders = self._os.get_customer_orders(_CURRENT_USER_ID)
+    def _my_orders(self, customer_id: int):
+        orders = self._os.get_customer_orders(customer_id)
         if not orders:
             print("Заказов нет.")
             return
@@ -137,10 +167,11 @@ class CLI:
         choice = input("Выбор: ").strip()
 
         if choice == "1":
-            name = input("Имя: ").strip()
+            first_name = input("Имя: ").strip()
+            last_name = input("Фамилия: ").strip()
             email = input("Email: ").strip()
             loyalty = input("Уровень лояльности (bronze/silver/gold) [bronze]: ").strip() or "bronze"
-            c = self._cs.create_customer(name, email, loyalty)
+            c = self._cs.create_customer(first_name, last_name, email, loyalty)
             print(f"Создан: {c}")
 
         elif choice == "2":
