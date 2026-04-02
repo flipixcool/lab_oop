@@ -106,7 +106,8 @@ class CustomerPostgresRepository(Repository[Customer]):
         if not orm:
             from domain.exceptions import CustomerNotFoundError
             raise CustomerNotFoundError(f"Customer '{entity.id}' not found")
-        orm.name = entity.name
+        orm.first_name = entity.first_name
+        orm.last_name = entity.last_name
         orm.email = entity.email
         orm.loyalty_level = entity.loyalty_level.value
         self._session.commit()
