@@ -1,7 +1,7 @@
 from typing import Callable
 from sqlalchemy.orm import Session
 from repository.base import Repository
-from repository.models_orm import CustomerORM, ProductORM, CategoryORM, OrderORM, OrderItemORM, WarehouseORM
+from repository.models_orm import CustomerORM, ProductORM, CategoryORM, OrderORM, OrderItemORM, WarehouseORM, ArchivedOrderORM
 from domain.exceptions import InsufficientStockError
 from domain.model import Customer, Product, Order, OrderItem, LoyaltyLevel, OrderStatus
 
@@ -73,6 +73,7 @@ def _orm_to_order(orm: OrderORM, products: dict[int, Product]) -> Order:
     o.discount = orm.discount
     o.created_at = orm.created_at
     o.items = items
+    o._total = None
     return o
 
 
@@ -233,6 +234,48 @@ class OrderPostgresRepository(Repository[Order]):
 
     def find_by(self, predicate: Callable[[Order], bool]) -> list[Order]:
         return [o for o in self.find_all() if predicate(o)]
+
+    def archive_order(self, order: Order) -> Order:
+        from datetime import datetime
+        orm = self._session.get(OrderORM, order.id)
+        if not orm:
+            from domain.exceptions import InvalidOrderError
+            raise InvalidOrderError(f"Order '{order.id}' not found")
+        
+        archived = ArchivedOrderORM(
+            id=orm.id,
+            customer_id=orm.customer_id,
+            status=orm.status.value,
+            discount=orm.discount,
+            total=order.total,
+            created_at=orm.created_at,
+            archived_at=datetime.now(),
+        )
+        self._session.add(archived)
+        
+        for item_orm in orm.items:
+            self._session.delete(item_orm)
+        self._session.delete(orm)
+        self._session.commit()
+        return order
+
+    def get_archived_orders(self, customer_id: int | None = None) -> list[Order]:
+        query = self._session.query(ArchivedOrderORM)
+        if customer_id:
+            query = query.filter_by(customer_id=customer_id)
+        orms = query.all()
+        return [self._orm_to_archived_order(o) for o in orms]
+
+    def _orm_to_archived_order(self, orm: ArchivedOrderORM) -> Order:
+        o = Order.__new__(Order)
+        o.id = orm.id
+        o.customer_id = orm.customer_id
+        o.status = OrderStatus(orm.status)
+        o.discount = orm.discount
+        o._total = orm.total
+        o.created_at = orm.created_at
+        o.items = []
+        return o
 
 
 class DBWarehouse:

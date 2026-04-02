@@ -5,12 +5,12 @@ from domain.model import Order, LoyaltyLevel
 class DiscountStrategy(ABC):
     @abstractmethod
     def apply(self, order: Order, loyalty_level: LoyaltyLevel) -> float:
-        """Возвращает итоговую сумму заказа после применения скидки"""
+        """Возвращает процент скидки"""
 
 
 class NoDiscount(DiscountStrategy):
     def apply(self, order: Order, loyalty_level: LoyaltyLevel) -> float:
-        return order.total
+        return 0.0
 
 
 class LoyaltyDiscount(DiscountStrategy):
@@ -20,5 +20,4 @@ class LoyaltyDiscount(DiscountStrategy):
             LoyaltyLevel.SILVER: 5,
             LoyaltyLevel.GOLD: 15,
         }
-        discount_percent = discounts.get(loyalty_level, 0)
-        return order.total * (1 - discount_percent / 100)
+        return discounts.get(loyalty_level, 0)

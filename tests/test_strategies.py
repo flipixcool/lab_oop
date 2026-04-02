@@ -15,19 +15,19 @@ def order():
 class TestNoDiscount:
     def test_returns_full_total(self, order):
         strategy = NoDiscount()
-        assert strategy.apply(order, LoyaltyLevel.BRONZE) == 1000
-        assert strategy.apply(order, LoyaltyLevel.GOLD) == 1000
+        assert strategy.apply(order, LoyaltyLevel.BRONZE) == 0.0
+        assert strategy.apply(order, LoyaltyLevel.GOLD) == 0.0
 
 
 class TestLoyaltyDiscount:
     def test_bronze_no_discount(self, order):
         strategy = LoyaltyDiscount()
-        assert strategy.apply(order, LoyaltyLevel.BRONZE) == 1000
+        assert strategy.apply(order, LoyaltyLevel.BRONZE) == 0.0
 
     def test_silver_five_percent(self, order):
         strategy = LoyaltyDiscount()
-        assert strategy.apply(order, LoyaltyLevel.SILVER) == 950
+        assert strategy.apply(order, LoyaltyLevel.SILVER) == 5.0
 
     def test_gold_fifteen_percent(self, order):
         strategy = LoyaltyDiscount()
-        assert strategy.apply(order, LoyaltyLevel.GOLD) == 850
+        assert strategy.apply(order, LoyaltyLevel.GOLD) == 15.0

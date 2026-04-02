@@ -1,7 +1,6 @@
 from service.customer_service import CustomerService
 from service.product_service import ProductService
 from service.order_service import OrderService
-from domain.strategies import LoyaltyDiscount, NoDiscount
 from domain.exceptions import ShopError
 from domain.utils import format_customer_id, format_product_id, format_order_id, parse_id
 
@@ -42,6 +41,7 @@ class CLI:
             print("  1. Показать товары")
             print("  2. Создать заказ")
             print("  3. Мои заказы")
+            print("  4. Мои архивные заказы")
             print("  0. Выход")
             choice = input("Выбор: ").strip()
             if choice == "0":
@@ -52,6 +52,8 @@ class CLI:
                 self._run(lambda: self._create_order_user(customer.id))
             elif choice == "3":
                 self._run(lambda: self._my_orders(customer.id))
+            elif choice == "4":
+                self._run(lambda: self._my_archived_orders(customer.id))
             else:
                 print("Неверный выбор.")
 
@@ -107,11 +109,8 @@ class CLI:
 
         order = self._os.create_order(customer_id, items_data)
         print(f"Заказ создан: {order}")
-
-        use_discount = input("Применить скидку лояльности? (y/n): ").strip().lower() == "y"
-        strategy = LoyaltyDiscount() if use_discount else NoDiscount()
-        total = self._os.calculate_total_with_discount(order.id, customer_id, strategy)
-        print(f"Итого к оплате: {total}₽")
+        print(f"Скидка лояльности: {order.discount}%")
+        print(f"Итого к оплате: {order.total * (1 - order.discount / 100):.2f}₽")
 
     def _my_orders(self, customer_id: int):
         orders = self._os.get_customer_orders(customer_id)
@@ -119,6 +118,14 @@ class CLI:
             print("Заказов нет.")
             return
         for o in orders:
+            print(f"  {o}")
+
+    def _my_archived_orders(self, customer_id: int):
+        archived = self._os.get_archived_orders(customer_id)
+        if not archived:
+            print("Архивных заказов нет.")
+            return
+        for o in archived:
             print(f"  {o}")
 
     # ── Панель администратора ─────────────────────────────────────────────────
@@ -131,6 +138,7 @@ class CLI:
             print("  3. Управление складом")
             print("  4. Все заказы")
             print("  5. Изменить статус заказа")
+            print("  6. Архив заказов")
             print("  0. Выход")
             choice = input("Выбор: ").strip()
             if choice == "0":
@@ -145,6 +153,8 @@ class CLI:
                 self._run(self._all_orders)
             elif choice == "5":
                 self._run(self._change_order_status)
+            elif choice == "6":
+                self._run(self._archived_orders)
             else:
                 print("Неверный выбор.")
 
@@ -154,7 +164,8 @@ class CLI:
             print("Заказов нет.")
             return
         for o in orders:
-            print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {o.total}₽")
+            final_total = o.total * (1 - o.discount / 100)
+            print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {final_total:.2f}₽ ({o.discount}% скидка)")
 
     # ── Клиенты ───────────────────────────────────────────────────────────────
 
@@ -258,6 +269,16 @@ class CLI:
         new_status = input("Новый статус: ").strip()
         order = self._os.change_order_status(parse_id(raw), new_status)
         print(f"Статус обновлён: {order.status.value}")
+
+    def _archived_orders(self):
+        archived = self._os.get_archived_orders()
+        if not archived:
+            print("Архив пуст.")
+            return
+        print("\n=== Архив заказов ===")
+        for o in archived:
+            final_total = o.total * (1 - o.discount / 100)
+            print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {final_total:.2f}₽ ({o.discount}% скидка)")
 
     # ── Вспомогательное ───────────────────────────────────────────────────────
 

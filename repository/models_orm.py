@@ -79,3 +79,15 @@ class WarehouseORM(Base):
 
     product_id: Mapped[int] = mapped_column(Integer, ForeignKey("products.id"), primary_key=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class ArchivedOrderORM(Base):
+    __tablename__ = "archived_orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey("customers.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    discount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    total: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    archived_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

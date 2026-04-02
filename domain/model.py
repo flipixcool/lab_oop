@@ -165,10 +165,17 @@ class Order:
         self.status = OrderStatus(status)
         self.discount = discount
         self.created_at = created_at or datetime.now()
+        self._total: float | None = None
 
     @property
     def total(self) -> float:
+        if self._total is not None:
+            return self._total
         return sum(item.subtotal for item in self.items)
+
+    @total.setter
+    def total(self, value: float):
+        self._total = value
 
     def change_status(self, new_status: str):
         self.status = OrderStatus(new_status)
@@ -183,7 +190,8 @@ class Order:
     def __str__(self):
         from domain.utils import format_order_id
         id_str = format_order_id(self.id) if self.id else "O-???"
-        return f"Заказ {id_str} | {self.total}₽ | {self.status.value}"
+        final_total = self.total * (1 - self.discount / 100)
+        return f"Заказ {id_str} | {final_total:.2f}₽ ({self.discount}% скидка) | {self.status.value}"
 
 
 class Warehouse:
