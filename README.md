@@ -36,7 +36,7 @@ lab_oop/
 ├── repository/          # Абстракция данных
 │   ├── base.py          # Repository[T] (ABC Generic)
 │   ├── postgres.py      # PostgreSQL реализация
-│   ├── models_orm.py    # SQLAlchemy ORM модели (7 таблиц)
+│   ├── models_orm.py    # SQLAlchemy ORM модели (8 таблиц)
 │   └── migrations/      # Alembic миграции
 ├── service/             # Бизнес-логика
 │   ├── customer_service.py
