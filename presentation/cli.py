@@ -164,6 +164,9 @@ class CLI:
             print("Заказов нет.")
             return
         for o in orders:
+            # ================ #
+            # см. ./info.md
+            # ================ #
             final_total = o.total * (1 - o.discount / 100)
             print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {final_total:.2f}₽ ({o.discount}% скидка)")
 

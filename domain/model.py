@@ -33,7 +33,9 @@ class Customer:
     ):
         Validators.validate_not_empty(first_name, "Имя")
         Validators.validate_not_empty(last_name, "Фамилия")
-        Validators.validate_not_empty(email, "Email")
+        # ======================================================== #
+        # Строка "Email" вместо email сойдет?
+        Validators.validate_not_empty(email, "Email") 
 
         Customer.total_customers += 1
         self.id = id
@@ -55,6 +57,9 @@ class Customer:
     def loyalty_level(self, value: str):
         self._loyalty_level = LoyaltyLevel(value)
 
+    # ======================================================== #
+    # А че у вас методы activate и close делают одно и то же?  #
+    # ======================================================== #
     def activate(self):
         self.loyalty_level = LoyaltyLevel.BRONZE.value
 
@@ -64,8 +69,11 @@ class Customer:
         elif self._loyalty_level == LoyaltyLevel.SILVER:
             self.loyalty_level = LoyaltyLevel.GOLD.value
 
+    # ======================================================== #
+    # У клиента вообще нет состояния как будто
     def close(self):
         self.loyalty_level = LoyaltyLevel.BRONZE.value
+    # ======================================================== #
 
     def __str__(self):
         from domain.utils import format_customer_id
