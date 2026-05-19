@@ -5,6 +5,14 @@ from domain.exceptions import EntityNotFoundError
 T = TypeVar('T')
 
 
+class ArchivableRepository(ABC, Generic[T]): # Добавил абстрактный класс только для архивируемых классов, чтобы они наследовали также и эти функции, раньше просто без объявления все это было, как то не правильно
+    @abstractmethod
+    def archive_order(self, order: T) -> T: ...
+
+    @abstractmethod
+    def get_archived_orders(self, customer_id: int | None = None) -> list[T]: ...
+
+
 class Repository(ABC, Generic[T]):
     @abstractmethod
     def add(self, entity: T) -> T: ...

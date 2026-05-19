@@ -1,6 +1,6 @@
 from typing import Callable
 from sqlalchemy.orm import Session
-from repository.base import Repository
+from repository.base import Repository, ArchivableRepository
 from repository.models_orm import CustomerORM, ProductORM, CategoryORM, OrderORM, OrderItemORM, WarehouseORM, ArchivedOrderORM
 from domain.exceptions import InsufficientStockError
 from domain.model import Customer, Product, Order, OrderItem, LoyaltyLevel, OrderStatus
@@ -193,7 +193,7 @@ class ProductPostgresRepository(Repository[Product]):
         return [p for p in self.find_all() if predicate(p)]
 
 
-class OrderPostgresRepository(Repository[Order]):
+class OrderPostgresRepository(Repository[Order], ArchivableRepository[Order]): # Добавили наследование для абстрактного класса для архивации заказов
     def __init__(self, session: Session):
         self._session = session
 
@@ -249,8 +249,8 @@ class OrderPostgresRepository(Repository[Order]):
             from domain.exceptions import InvalidOrderError
             raise InvalidOrderError(f"Order '{order.id}' not found")
         
-        final_total = order.discounted_total if order.discounted_total is not None else order.total * (1 - order.discount / 100) # вот как раз таки рассчет финальной скидки
-        archived = ArchivedOrderORM( 
+        final_total = order.discounted_total if order.discounted_total is not None else order.total * (1 - order.discount / 100)
+        archived = ArchivedOrderORM(
             id=orm.id,
             customer_id=orm.customer_id,
             status=orm.status.value,
