@@ -12,6 +12,7 @@ def _customer_to_orm(c: Customer) -> CustomerORM:
         last_name=c.last_name,
         email=c.email,
         loyalty_level=c.loyalty_level.value,
+        is_active=c.is_active,
         created_at=c.created_at,
     )
     if c.id:
@@ -26,6 +27,7 @@ def _orm_to_customer(orm: CustomerORM) -> Customer:
     c.last_name = orm.last_name
     c.email = orm.email
     c._loyalty_level = LoyaltyLevel(orm.loyalty_level)
+    c.is_active = orm.is_active
     c.created_at = orm.created_at
     return c
 
@@ -110,6 +112,7 @@ class CustomerPostgresRepository(Repository[Customer]):
         orm.last_name = entity.last_name
         orm.email = entity.email
         orm.loyalty_level = entity.loyalty_level.value
+        orm.is_active = entity.is_active
         self._session.commit()
         return entity
 

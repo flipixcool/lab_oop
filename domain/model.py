@@ -28,6 +28,7 @@ class Customer:
         last_name: str,
         email: str,
         loyalty_level: str = "bronze",
+        is_active: bool = True,
         id: int | None = None,
         created_at: datetime | None = None,
     ):
@@ -41,6 +42,7 @@ class Customer:
         self.last_name = last_name
         self.email = email
         self._loyalty_level = LoyaltyLevel(loyalty_level)
+        self.is_active = is_active
         self.created_at = created_at or datetime.now()
 
     @property
@@ -56,8 +58,8 @@ class Customer:
         self._loyalty_level = LoyaltyLevel(value)
 
     def activate(self):
-        self.loyalty_level = LoyaltyLevel.BRONZE.value
-
+        self.is_active = True # Добавил реальную логику включения клиента и выключения клиента, реально была логическая ошибка((((
+        
     def upgrade(self):
         if self._loyalty_level == LoyaltyLevel.BRONZE:
             self.loyalty_level = LoyaltyLevel.SILVER.value
@@ -65,7 +67,7 @@ class Customer:
             self.loyalty_level = LoyaltyLevel.GOLD.value
 
     def close(self):
-        self.loyalty_level = LoyaltyLevel.BRONZE.value
+        self.is_active = False
 
     def __str__(self):
         from domain.utils import format_customer_id

@@ -17,6 +17,7 @@ class CustomerORM(Base):
         nullable=False,
         default=LoyaltyLevel.BRONZE.value,
     )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True) # добавил в бд для миграции колонку с активностью клиента
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     orders: Mapped[list["OrderORM"]] = relationship("OrderORM", back_populates="customer")
