@@ -58,8 +58,8 @@ class Customer:
         self._loyalty_level = LoyaltyLevel(value)
 
     def activate(self):
-        self.is_active = True # Добавил реальную логику включения клиента и выключения клиента, реально была логическая ошибка((((
-        
+        self.is_active = True # Добавили логику активации пользователя, реально была проблема(((
+
     def upgrade(self):
         if self._loyalty_level == LoyaltyLevel.BRONZE:
             self.loyalty_level = LoyaltyLevel.SILVER.value
@@ -168,6 +168,7 @@ class Order:
         self.discount = discount
         self.created_at = created_at or datetime.now()
         self._total: float | None = None
+        self.discounted_total: float | None = None # добавлена строка с рассчетом финальной скидки, чтобы не считать скидку на лету в cli
 
     @property
     def total(self) -> float:

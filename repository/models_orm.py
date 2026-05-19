@@ -17,7 +17,7 @@ class CustomerORM(Base):
         nullable=False,
         default=LoyaltyLevel.BRONZE.value,
     )
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True) # добавил в бд для миграции колонку с активностью клиента
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     orders: Mapped[list["OrderORM"]] = relationship("OrderORM", back_populates="customer")
@@ -56,6 +56,7 @@ class OrderORM(Base):
         default=OrderStatus.PENDING.value,
     )
     discount: Mapped[float] = mapped_column(Float, default=0.0)
+    discounted_total: Mapped[float | None] = mapped_column(Float, nullable=True) # новый столбец в ордерах
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     customer: Mapped["CustomerORM"] = relationship("CustomerORM", back_populates="orders")

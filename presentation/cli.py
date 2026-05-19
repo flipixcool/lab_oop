@@ -164,8 +164,8 @@ class CLI:
             print("Заказов нет.")
             return
         for o in orders:
-            final_total = o.total * (1 - o.discount / 100)
-            print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {final_total:.2f}₽ ({o.discount}% скидка)")
+            display_total = o.discounted_total if o.discounted_total is not None else o.total * (1 - o.discount / 100)
+            print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {display_total:.2f}₽ ({o.discount}% скидка)")
 
     # ── Клиенты ───────────────────────────────────────────────────────────────
 
@@ -277,8 +277,7 @@ class CLI:
             return
         print("\n=== Архив заказов ===")
         for o in archived:
-            final_total = o.total * (1 - o.discount / 100)
-            print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {final_total:.2f}₽ ({o.discount}% скидка)")
+            print(f"  {format_order_id(o.id)} | {format_customer_id(o.customer_id)} | {o.status.value} | {o.total:.2f}₽")
 
     # ── Вспомогательное ───────────────────────────────────────────────────────
 

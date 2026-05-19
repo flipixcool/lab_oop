@@ -62,12 +62,15 @@ class OrderService:
         if not order:
             raise InvalidOrderError(f"Order '{order_id}' not found")
         order.change_status(new_status)
-        
+
         new_status_enum = OrderStatus(new_status)
+        if new_status_enum == OrderStatus.CONFIRMED:
+            order.discounted_total = order.total * (1 - order.discount / 100) #  фиксируем скидку только после того как заказ оплачен, т.е хранит значение "confimed"
+
         if new_status_enum in (OrderStatus.DELIVERED, OrderStatus.CANCELLED):
             self._order_repo.update(order)
             return self.archive_order(order)
-        
+
         return self._order_repo.update(order)
 
     def archive_order(self, order: Order) -> Order:

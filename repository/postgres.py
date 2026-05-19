@@ -47,6 +47,7 @@ def _order_to_orm(o: Order) -> OrderORM:
         customer_id=o.customer_id,
         status=o.status.value,
         discount=o.discount,
+        discounted_total=o.discounted_total,
         created_at=o.created_at,
     )
     if o.id:
@@ -73,6 +74,7 @@ def _orm_to_order(orm: OrderORM, products: dict[int, Product]) -> Order:
     o.customer_id = orm.customer_id
     o.status = OrderStatus(orm.status)
     o.discount = orm.discount
+    o.discounted_total = orm.discounted_total
     o.created_at = orm.created_at
     o.items = items
     o._total = None
@@ -221,6 +223,7 @@ class OrderPostgresRepository(Repository[Order]):
             raise InvalidOrderError(f"Order '{entity.id}' not found")
         orm.status = entity.status.value
         orm.discount = entity.discount
+        orm.discounted_total = entity.discounted_total
         self._session.commit()
         return entity
 
@@ -246,12 +249,13 @@ class OrderPostgresRepository(Repository[Order]):
             from domain.exceptions import InvalidOrderError
             raise InvalidOrderError(f"Order '{order.id}' not found")
         
-        archived = ArchivedOrderORM(
+        final_total = order.discounted_total if order.discounted_total is not None else order.total * (1 - order.discount / 100) # вот как раз таки рассчет финальной скидки
+        archived = ArchivedOrderORM( 
             id=orm.id,
             customer_id=orm.customer_id,
             status=orm.status.value,
             discount=orm.discount,
-            total=order.total,
+            total=final_total,
             created_at=orm.created_at,
             archived_at=datetime.now(),
         )
