@@ -2,7 +2,7 @@
 
 ## Изображение связей
 
-![фото](images/deepseek_mermaid_20260402_401032.png)
+![фото](images/image.png)
 
 ---
 

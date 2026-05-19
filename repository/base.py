@@ -5,7 +5,7 @@ from domain.exceptions import EntityNotFoundError
 T = TypeVar('T')
 
 
-class ArchivableRepository(ABC, Generic[T]): # Добавил абстрактный класс только для архивируемых классов, чтобы они наследовали также и эти функции, раньше просто без объявления все это было, как то не правильно
+class ArchivableRepository(ABC, Generic[T]): 
     @abstractmethod
     def archive_order(self, order: T) -> T: ...
 
@@ -33,9 +33,10 @@ class Repository(ABC, Generic[T]):
     def find_by(self, predicate: Callable[[T], bool]) -> list[T]: ...
 
 
-class InMemoryRepository(Repository[T]):
+class InMemoryRepository(Repository[T], ArchivableRepository[T]): #теперь этот класс наследует ArchivableRepository[T] и реализует archive_order / get_archived_orders, и не ломается при архивации)
     def __init__(self):
         self._storage: dict[int, T] = {}
+        self._archive: list[T] = []
         self._next_id: int = 1
 
     def add(self, entity: T) -> T:
@@ -64,3 +65,13 @@ class InMemoryRepository(Repository[T]):
 
     def find_by(self, predicate: Callable[[T], bool]) -> list[T]:
         return [entity for entity in self._storage.values() if predicate(entity)]
+
+    def archive_order(self, order: T) -> T:
+        self._archive.append(order)
+        self.delete(order.id)
+        return order
+
+    def get_archived_orders(self, customer_id: int | None = None) -> list[T]:
+        if customer_id:
+            return [o for o in self._archive if o.customer_id == customer_id]
+        return list(self._archive)
