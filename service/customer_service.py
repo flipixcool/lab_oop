@@ -31,5 +31,17 @@ class CustomerService:
             lambda c: c.first_name.lower() == fn and c.last_name.lower() == ln
         )
 
+    def update_customer(self, customer_id: int, first_name: str | None = None, last_name: str | None = None, email: str | None = None) -> Customer: # ну вот такая штука, меняем что то у покупателя
+        customer = self._repo.get(customer_id)
+        if not customer:
+            raise CustomerNotFoundError(f"Customer '{customer_id}' not found")
+        if first_name:
+            customer.first_name = first_name
+        if last_name:
+            customer.last_name = last_name
+        if email:
+            customer.email = email
+        return self._repo.update(customer)
+
     def delete_customer(self, customer_id: str) -> bool:
         return self._repo.delete(customer_id)

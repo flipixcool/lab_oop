@@ -139,6 +139,7 @@ class CLI:
             print("  4. Все заказы")
             print("  5. Изменить статус заказа")
             print("  6. Архив заказов")
+            print("  7. Редактировать скидку заказа")
             print("  0. Выход")
             choice = input("Выбор: ").strip()
             if choice == "0":
@@ -155,6 +156,8 @@ class CLI:
                 self._run(self._change_order_status)
             elif choice == "6":
                 self._run(self._archived_orders)
+            elif choice == "7":
+                self._run(self._edit_order_discount) # Меняем скидку у покупателя
             else:
                 print("Неверный выбор.")
 
@@ -175,6 +178,7 @@ class CLI:
         print("  2. Показать всех клиентов")
         print("  3. Удалить клиента")
         print("  4. Повысить уровень лояльности")
+        print("  5. Редактировать клиента")
         choice = input("Выбор: ").strip()
 
         if choice == "1":
@@ -203,6 +207,14 @@ class CLI:
             raw = input("ID клиента (например C-001): ").strip()
             c = self._cs.upgrade_loyalty(parse_id(raw))
             print(f"Уровень лояльности: {c.loyalty_level.value}")
+
+        elif choice == "5": # Добавил функционал для изменения данных о покупателях от лица админа
+            raw = input("ID клиента (например C-001): ").strip()
+            first_name = input("Новое имя (Enter — не менять): ").strip() or None
+            last_name = input("Новая фамилия (Enter — не менять): ").strip() or None
+            email = input("Новый email (Enter — не менять): ").strip() or None
+            c = self._cs.update_customer(parse_id(raw), first_name, last_name, email)
+            print(f"Обновлён: {c}")
 
     # ── Товары ────────────────────────────────────────────────────────────────
 
@@ -262,6 +274,12 @@ class CLI:
             print(f"Остаток: {self._ps.get_stock(product_id)}")
 
     # ── Заказы ────────────────────────────────────────────────────────────────
+
+    def _edit_order_discount(self):
+        raw = input("ID заказа (например O-001): ").strip()
+        discount = float(input("Новая скидка (0-100): ").strip())
+        order = self._os.update_discount(parse_id(raw), discount)
+        print(f"Скидка обновлена: {order.discount}%")
 
     def _change_order_status(self):
         raw = input("ID заказа (например O-001): ").strip()

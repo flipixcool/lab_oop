@@ -65,12 +65,19 @@ class OrderService:
 
         new_status_enum = OrderStatus(new_status)
         if new_status_enum == OrderStatus.CONFIRMED:
-            order.discounted_total = order.total * (1 - order.discount / 100) #  фиксируем скидку только после того как заказ оплачен, т.е хранит значение "confimed"
+            order.discounted_total = order.total * (1 - order.discount / 100)
 
         if new_status_enum in (OrderStatus.DELIVERED, OrderStatus.CANCELLED):
             self._order_repo.update(order)
             return self.archive_order(order)
 
+        return self._order_repo.update(order)
+
+    def update_discount(self, order_id: int, discount: float) -> Order: # меняем скидку у покупателя
+        order = self._order_repo.get(order_id)
+        if not order:
+            raise InvalidOrderError(f"Order '{order_id}' not found")
+        order.discount = discount
         return self._order_repo.update(order)
 
     def archive_order(self, order: Order) -> Order:
